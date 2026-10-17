@@ -12,6 +12,8 @@
     "deploy": "vite build && wrangler deploy"
   },
   "dependencies": {
+    "@fontsource-variable/overpass": "^5.3.0",
+    "@fontsource/overpass-mono": "^5.3.0",
     "@geoman-io/leaflet-geoman-free": "^2.20.2",
     "comlink": "^4.4.2",
     "idb-keyval": "^6.3.0",

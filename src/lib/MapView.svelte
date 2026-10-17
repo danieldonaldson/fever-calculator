@@ -40,6 +40,10 @@
   const KIND_COLOR: Record<Kind, string> = { residential: '#28aa3c', commercial: '#285adc', industrial: '#f08c14' };
   const IND = { fill: '#9632c8', supplier: '#e03131', consumer: '#15aabf' };
   const LABEL_MIN_ZOOM = -2;
+  /** district tooltips open above the circle: the town's name label sits to its right */
+  const HOVER_TIP: L.TooltipOptions = { pane: 'hoverTips', direction: 'top' };
+  /** emoji size inside an industry marker */
+  const GLYPH_PX = 15;
   /** zoomed further out, only index contours show: minor ones run together in the hills */
   const MINOR_CONTOUR_MIN_ZOOM = -2;
 
@@ -84,11 +88,13 @@
     map.createPane('terrain').style.zIndex = '200';
     map.createPane('contours').style.zIndex = '250';
     map.createPane('rails').style.zIndex = '300';
-    overlay = L.imageOverlay(terrain, bounds, { pane: 'terrain', pmIgnore: true, snapIgnore: true } as object).addTo(map);
+    overlay = L.imageOverlay(terrain, bounds, { pane: 'terrain', className: 'terrain', pmIgnore: true, snapIgnore: true } as object).addTo(map);
     rails = railLayer(world.rails);
     L.control.scale({ imperial: false, position: 'bottomleft' }).addTo(map);
     // town names above industry labels (both are tooltips; tooltipPane is z-index 650)
     map.createPane('townLabels').style.zIndex = '655';
+    // hover tooltips above every permanent label, so a town's name never covers its districts' details
+    map.createPane('hoverTips').style.zIndex = '700';
 
     // Town centres: one circle per kind, radius from FINDINGS §8 (8 + 0.75·√capacity px at 4 m/px).
     for (const t of world.towns) {
@@ -98,7 +104,7 @@
           color: '#000', weight: 1.5, fillColor: KIND_COLOR[kind], fillOpacity: 0.65, className: 'district',
         }).addTo(map);
         if (kind === 'residential') {
-          circle.bindTooltip(`${esc(t.name)} · residential ${t.capacity[kind].toLocaleString()}`);
+          circle.bindTooltip(`${esc(t.name)} · residential ${t.capacity[kind].toLocaleString()}`, HOVER_TIP);
           continue;
         }
         const needs = t.demand[kind];
@@ -110,6 +116,7 @@
             (needs.length
               ? 'needs: ' + needs.map((d) => `${cargoIcon(d.cargo)} ${cargoName(d.cargo)}${factorLabel(d.factor)}`).join(', ')
               : 'no cargo needs yet'),
+            HOVER_TIP,
           )
           .on('click', () => onPin(h))
           .on('mouseover', () => (hover = h))
@@ -126,7 +133,7 @@
 
     for (const i of world.industries) {
       const h: Highlight = { kind: 'industry', type: i.type };
-      const icon = L.divIcon({ className: 'industry-icon', html: `<span>${industryIcon(i.type)}</span>`, iconSize: [26, 26] });
+      const icon = L.divIcon({ className: 'industry-icon', html: `<span>${glyph(industryIcon(i.type))}</span>`, iconSize: [26, 26] });
       const layer = L.marker(ll(i.x, i.y), { ...fixed, icon, riseOnHover: true })
         .bindTooltip(industryName(i.type), { permanent: true, direction: 'bottom', offset: [0, 12], className: 'industry-label' })
         .on('click', () => onPin(h))
@@ -305,9 +312,31 @@
       layer.setStyle({ color: r.color, weight: 4, opacity: 0.9 });
       const tip = `${esc(r.name)} · ${km(routeLength(r))}`;
       if (layer.getTooltip()) layer.setTooltipContent(tip);
-      else layer.bindTooltip(tip, { sticky: true });
+      else layer.bindTooltip(tip, { ...HOVER_TIP, sticky: true });
     }
   });
+
+  /**
+   * An emoji drawn so its ink, not its line box, is centred in the marker. Emoji fonts disagree on
+   * ascent and descent, so CSS centring leaves them a pixel or two high or low depending on the browser.
+   */
+  const glyphs = new Map<string, string>();
+  let measure: OffscreenCanvasRenderingContext2D | null = null;
+  function glyph(e: string): string {
+    let svg = glyphs.get(e);
+    if (svg) return svg;
+    if (!measure) {
+      measure = new OffscreenCanvas(1, 1).getContext('2d')!;
+      measure.font = `${GLYPH_PX}px ${getComputedStyle(el).getPropertyValue('--emoji').trim() || 'sans-serif'}`;
+    }
+    const m = measure.measureText(e);
+    // alphabetic baseline at y, text starting at x: ink spans x - left .. x + right and y - ascent .. y + descent
+    const x = (m.actualBoundingBoxLeft - m.actualBoundingBoxRight) / 2;
+    const y = (m.actualBoundingBoxAscent - m.actualBoundingBoxDescent) / 2;
+    svg = `<svg viewBox="-11 -11 22 22" aria-hidden="true"><text x="${x.toFixed(2)}" y="${y.toFixed(2)}" font-size="${GLYPH_PX}">${e}</text></svg>`;
+    glyphs.set(e, svg);
+    return svg;
+  }
 
   function esc(s: string) {
     return s.replace(/[&<>"]/g, (c) => `&#${c.charCodeAt(0)};`);
@@ -330,42 +359,50 @@
 {#if active}
   <div class="legend" class:pinned={active === pinned}>
     {#if active === pinned}
-      <button class="close" onclick={() => onPin(null)} title="Unpin (Esc)">✕</button>
+      <button class="close" onclick={() => onPin(null)} title="Unpin (Esc)" aria-label="Unpin">✕</button>
     {/if}
     {#if active.kind === 'industry'}
       {@const { inputs, outputs } = chainOf(active.type)}
       {@const p = partners(active.type)}
       {@const towns = wantedBy(outputs)}
-      <b>{industryIcon(active.type)} {industryName(active.type)} ×{countOf(active.type)}</b>
-      {#if inputs.length}
-        <span>in: {inputs.map((c) => `${cargoIcon(c)} ${cargoName(c)}`).join(', ')}</span>
-      {/if}
-      {#if outputs.length}
-        <span>out: {outputs.map((c) => `${cargoIcon(c)} ${cargoName(c)}`).join(', ')}</span>
-      {/if}
-      <span><i style:background={IND.fill}></i>{industryName(active.type)}</span>
       {@const sup = industryList(p.suppliers)}
       {@const con = industryList(p.consumers)}
-      <span><i style:background={IND.supplier}></i>supplies it: {sup || 'none on this map'}</span>
-      <span><i style:background={IND.consumer}></i>takes its output: {con || 'none on this map'}</span>
-      {#if towns.length}
-        <span><i class="ring" style:border-color={IND.consumer}></i>towns: {towns.join(', ')}</span>
+      <div class="title"><span class="emoji">{industryIcon(active.type)}</span>{industryName(active.type)} <span class="muted">×{countOf(active.type)}</span></div>
+      {#if inputs.length || outputs.length}
+        <dl class="flow">
+          {#if inputs.length}
+            <dt>In</dt><dd>{inputs.map((c) => `${cargoIcon(c)} ${cargoName(c)}`).join(', ')}</dd>
+          {/if}
+          {#if outputs.length}
+            <dt>Out</dt><dd>{outputs.map((c) => `${cargoIcon(c)} ${cargoName(c)}`).join(', ')}</dd>
+          {/if}
+        </dl>
       {/if}
+      <ul class="key">
+        <li><i style:background={IND.fill}></i><span>{industryName(active.type)}</span></li>
+        <li><i style:background={IND.supplier}></i><span><b>Supplies it</b> {sup || 'none on this map'}</span></li>
+        <li><i style:background={IND.consumer}></i><span><b>Takes its output</b> {con || 'none on this map'}</span></li>
+        {#if towns.length}
+          <li><i class="ring" style:border-color={IND.consumer}></i><span><b>Towns</b> {towns.join(', ')}</span></li>
+        {/if}
+      </ul>
     {:else}
       {@const t = townById.get(active.town)}
       {@const needs = t?.demand[active.district] ?? []}
-      <b>{active.label} <span class="muted">{t?.capacity[active.district].toLocaleString()}</span></b>
-      {#each needs as d}
-        <span>{cargoIcon(d.cargo)} <b>{cargoName(d.cargo)}</b>{factorLabel(d.factor)} ← {industryList(producersOf(d.cargo)) || 'no producer'}</span>
-      {:else}
-        <span>no cargo needs yet</span>
-      {/each}
-      <span><i style:background={IND.supplier}></i>produces it</span>
+      <div class="title">{active.label} <span class="muted">{t?.capacity[active.district].toLocaleString()}</span></div>
+      <ul class="key">
+        {#each needs as d}
+          <li><span class="emoji">{cargoIcon(d.cargo)}</span><span><b>{cargoName(d.cargo)}{factorLabel(d.factor)}</b> ← {industryList(producersOf(d.cargo)) || 'no producer'}</span></li>
+        {:else}
+          <li class="muted">No cargo needs yet</li>
+        {/each}
+        <li><i style:background={IND.supplier}></i><span>Produces it</span></li>
+      </ul>
     {/if}
     {#if !pinned}
-      <span class="muted">click to pin</span>
+      <div class="foot">Click to pin</div>
     {:else if drawing}
-      <span class="muted">drawing: click the last point again to finish</span>
+      <div class="foot">Drawing: click the last point again to finish</div>
     {/if}
   </div>
 {/if}
@@ -376,40 +413,130 @@
     inset: 0;
     background: var(--map-bg);
   }
+  /* the world as a sheet lifted off the background: a navy keyline and a soft shadow */
+  .map :global(img.terrain) {
+    outline: 2px solid var(--navy);
+    box-shadow: 0 4px 12px rgb(10 20 40 / 0.3), 0 20px 56px rgb(10 20 40 / 0.45);
+  }
+  @media (prefers-color-scheme: dark) {
+    .map :global(img.terrain) {
+      outline: 1.5px solid rgb(241 243 248 / 0.3);
+      box-shadow: 0 4px 12px rgb(0 0 0 / 0.5), 0 20px 56px rgb(0 0 0 / 0.7);
+    }
+  }
   .legend {
     position: absolute;
     right: 12px;
     bottom: 24px;
     z-index: 1000;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    padding: 8px 10px;
-    border-radius: 6px;
-    background: var(--panel);
-    color: var(--text);
-    box-shadow: 0 1px 4px rgb(0 0 0 / 0.25);
-    font-size: 13px;
+    width: max-content;
     max-width: min(380px, calc(100% - 80px));
+    --muted: var(--on-navy-muted);
+    --border: var(--navy-line);
+    overflow: hidden;
+    padding: 16px 16px 12px;
+    border: none;
+    border-radius: 12px;
+    background: var(--navy);
+    color: var(--on-navy);
+    box-shadow: var(--shadow-lg);
+    font-size: 13px;
+    line-height: 1.4;
     pointer-events: none;
   }
+  /* line-coloured band along the top, solid when pinned */
+  .legend::before {
+    content: '';
+    position: absolute;
+    inset: 0 0 auto;
+    height: 4px;
+    background: repeating-linear-gradient(90deg, var(--signal) 0 10px, transparent 10px 16px);
+  }
   .legend.pinned {
-    padding-right: 30px;
-    outline: 2px solid var(--accent);
+    padding-right: 36px;
     pointer-events: auto;
+  }
+  .legend.pinned::before {
+    background: var(--signal);
+  }
+  @media (max-width: 720px) {
+    .legend {
+      right: 8px;
+      bottom: 8px;
+      left: 8px;
+      width: auto;
+      max-width: none;
+      max-height: 45%;
+      overflow-y: auto;
+    }
+  }
+  .title {
+    font-size: 15px;
+    font-weight: 800;
+  }
+  .emoji {
+    display: inline-block;
+    width: 1.5em;
+    font-family: var(--emoji);
+    flex: none;
   }
   .close {
     position: absolute;
-    top: 4px;
-    right: 4px;
-    padding: 0 6px;
+    top: 10px;
+    right: 8px;
+    padding: 2px 7px;
     border: none;
     background: none;
+    color: var(--muted);
     font-size: 13px;
+  }
+  .close:hover:not(:disabled) {
+    background: var(--navy-3);
+    color: var(--on-navy);
   }
   .muted {
     color: var(--muted);
     font-weight: normal;
+    font-variant-numeric: tabular-nums;
+  }
+  .flow {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 2px 10px;
+    margin: 8px 0 0;
+  }
+  .flow dt {
+    color: var(--muted);
+    color: var(--signal);
+    font-size: 10.5px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    line-height: 19px;
+  }
+  .flow dd {
+    margin: 0;
+  }
+  .key {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin: 10px 0 0;
+    padding: 10px 0 0;
+    border-top: 1px solid var(--border);
+    list-style: none;
+  }
+  .key li {
+    display: flex;
+    align-items: baseline;
+  }
+  .key b {
+    font-weight: 750;
+  }
+  .foot {
+    margin-top: 8px;
+    color: var(--muted);
+    font-size: 12px;
   }
   .legend i.ring {
     background: none;
@@ -417,24 +544,26 @@
   }
   .legend i {
     display: inline-block;
+    flex: none;
     width: 10px;
     height: 10px;
-    margin-right: 6px;
+    margin: 0 8px 0 2px;
     border-radius: 50%;
-    border: 1px solid #000;
+    border: 1.5px solid rgb(255 255 255 / 0.85);
   }
   .map :global(.town-label) {
-    padding: 2px 6px;
+    padding: 4px 8px 2px;
     border: none;
-    background: rgb(255 255 255 / 0.85);
-    box-shadow: none;
-    color: #141414;
+    border-radius: 6px;
+    background: rgb(20 33 61 / 0.92);
+    box-shadow: 0 1px 3px rgb(0 0 0 / 0.3);
+    color: #f1f3f8;
     font-size: 15px;
-    line-height: 1.2;
+    line-height: 1.15;
   }
   .map :global(.town-label small) {
     display: block;
-    color: #444;
+    color: #aab4cc;
     font-size: 11px;
   }
   .map :global(.town-label::before),
@@ -450,9 +579,13 @@
     border-radius: 50%;
     background: #fff;
     box-shadow: 0 1px 3px rgb(0 0 0 / 0.35);
-    font-size: 15px;
-    line-height: 1;
     transition: opacity 0.15s, transform 0.15s;
+  }
+  .map :global(.industry-icon svg) {
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    font-family: var(--emoji);
   }
   .map :global(.industry-icon) {
     --ind: #9632c8;
@@ -473,9 +606,10 @@
     opacity: 0.25;
   }
   .map :global(.industry-label) {
-    padding: 0 3px;
+    padding: 0 4px;
     border: none;
-    background: rgb(255 255 255 / 0.7);
+    border-radius: 3px;
+    background: rgb(255 255 255 / 0.75);
     box-shadow: none;
     color: #46146a;
     font-size: 11px;
@@ -517,11 +651,11 @@
     transition: opacity 0.15s;
   }
   .map :global(.town-label.self) {
-    background: #fff;
+    background: #14213d;
     box-shadow: 0 0 0 3px #9632c8;
   }
   .map :global(.town-label.consumer) {
-    background: #fff;
+    background: #14213d;
     box-shadow: 0 0 0 3px #15aabf;
   }
   .map :global(.town-label.dim) {

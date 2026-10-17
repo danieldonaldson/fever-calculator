@@ -1,33 +1,63 @@
+/*
+ * Transit-diagram theme: navy chrome like station signage, signal yellow for actions and line markers,
+ * Overpass (from US highway lettering) for type. The map's own data colours (districts, supply-chain
+ * roles, routes) stay the only other hues.
+ */
 :root {
-  --bg: #f4f4f1;
+  /* signage chrome, the same in both schemes */
+  --navy: #14213d;
+  --navy-2: #1c2d52;
+  --navy-3: #26396a;
+  --navy-line: #2c3f6b;
+  --on-navy: #f1f3f8;
+  --on-navy-muted: #9aa6c2;
+  --signal: #ffc300;
+  --signal-ink: #14213d;
+  /* role colours lifted for text on navy */
+  --role-self: #c77dff;
+  --role-supplier: #ff6b6b;
+  --role-consumer: #3bc9db;
+
+  --bg: #e9ecf2;
   --panel: #ffffff;
-  --text: #1d1d1f;
-  --muted: #6b6b70;
-  --border: #e2e2dc;
-  --hover: #eeeee9;
-  --accent: #1c7ed6;
-  --accent-text: #ffffff;
-  --error: #c92a2a;
+  --sunken: #eef1f6;
+  --text: #14213d;
+  --muted: #5d6b88;
+  --border: #d5dbe6;
+  --hover: #eef1f6;
+  --accent: var(--signal);
+  --accent-text: var(--signal-ink);
+  --focus: #ffc300;
+  --error: #d6336c;
   --warn-bg: #fff3bf;
-  --map-bg: #e1e1da;
+  --map-bg: #d9dee8;
+  --shadow: 0 1px 2px rgb(10 20 40 / 0.12), 0 3px 10px rgb(10 20 40 / 0.14);
+  --shadow-lg: 0 2px 6px rgb(10 20 40 / 0.12), 0 18px 48px rgb(10 20 40 / 0.22);
+  --radius: 10px;
+  --sans: 'Overpass Variable', Overpass, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --mono: 'Overpass Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  /* emoji icons get their own font: Overpass's lopsided line metrics push them off-centre */
+  --emoji: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;
   color-scheme: light dark;
-  font-family: system-ui, -apple-system, 'Segoe UI', 'Noto Sans', sans-serif;
+  font-family: var(--sans);
   font-size: 15px;
+  -webkit-font-smoothing: antialiased;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #18181a;
-    --panel: #222225;
-    --text: #e8e8ea;
-    --muted: #9a9aa0;
-    --border: #34343a;
-    --hover: #2e2e33;
-    --accent: #4dabf7;
-    --accent-text: #0b1520;
-    --error: #ff8787;
-    --warn-bg: #5c4a00;
-    --map-bg: #2a2a2d;
+    --bg: #0b1324;
+    --panel: #14213d;
+    --sunken: #0f1a31;
+    --text: #f1f3f8;
+    --muted: #9aa6c2;
+    --border: #2c3f6b;
+    --hover: #1c2d52;
+    --error: #ff8fab;
+    --warn-bg: #4d3f00;
+    --map-bg: #1a2440;
+    --shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 3px 10px rgb(0 0 0 / 0.4);
+    --shadow-lg: 0 2px 6px rgb(0 0 0 / 0.4), 0 18px 48px rgb(0 0 0 / 0.55);
   }
 }
 
@@ -41,49 +71,207 @@ body {
   color: var(--text);
 }
 
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
 button {
-  padding: 5px 10px;
-  border: 1px solid var(--border);
-  border-radius: 5px;
+  padding: 6px 12px 5px;
+  border: 1.5px solid var(--border);
+  border-radius: 999px;
   background: var(--panel);
   color: var(--text);
   font: inherit;
   font-size: 14px;
+  font-weight: 600;
   cursor: pointer;
+  transition: background-color 0.12s, border-color 0.12s, color 0.12s, transform 0.06s;
 }
 
 button:hover:not(:disabled) {
   background: var(--hover);
 }
 
+button:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
 button:disabled {
-  opacity: 0.5;
+  opacity: 0.4;
   cursor: default;
 }
 
 button.primary {
-  border-color: var(--accent);
-  background: var(--accent);
-  color: var(--accent-text);
+  border-color: var(--signal);
+  background: var(--signal);
+  color: var(--signal-ink);
+  font-weight: 750;
 }
 
 button.primary:hover:not(:disabled) {
-  background: var(--accent);
-  filter: brightness(1.08);
+  border-color: #ffd23f;
+  background: #ffd23f;
 }
 
 input:not([type]),
-input[type='text'] {
-  padding: 4px 6px;
-  border: 1px solid var(--border);
-  border-radius: 4px;
+input[type='text'],
+select {
+  padding: 5px 9px 4px;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
   background: var(--bg);
   color: var(--text);
   font: inherit;
   font-size: 14px;
 }
 
+/* checkboxes as signage switches */
+input[type='checkbox'] {
+  position: relative;
+  flex: none;
+  width: 32px;
+  height: 18px;
+  margin: 0;
+  border-radius: 999px;
+  background: var(--navy-line);
+  appearance: none;
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+input[type='checkbox']::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--on-navy-muted);
+  transition: transform 0.15s, background-color 0.15s;
+}
+
+input[type='checkbox']:checked {
+  background: var(--signal);
+}
+
+input[type='checkbox']:checked::after {
+  background: var(--navy);
+  transform: translateX(14px);
+}
+
 code {
+  font-family: var(--mono);
   font-size: 12px;
   word-break: break-all;
+}
+
+/* Leaflet and Geoman controls as navy signage */
+.leaflet-container {
+  font: inherit;
+}
+
+.leaflet-bar,
+.leaflet-touch .leaflet-bar,
+.leaflet-pm-toolbar.leaflet-bar {
+  overflow: hidden;
+  border: none;
+  border-radius: var(--radius);
+  background: var(--navy);
+  box-shadow: var(--shadow);
+}
+
+.leaflet-bar a,
+.leaflet-touch .leaflet-bar a {
+  width: 34px;
+  height: 34px;
+  border-bottom: 1px solid var(--navy-line);
+  background-color: var(--navy);
+  color: var(--on-navy);
+  font-weight: 400;
+  line-height: 34px;
+}
+
+.leaflet-bar a:last-child,
+.leaflet-touch .leaflet-bar a:last-child {
+  border-bottom: none;
+  border-radius: 0;
+}
+
+.leaflet-bar a:hover,
+.leaflet-bar a:focus {
+  background-color: var(--navy-3);
+  color: var(--on-navy);
+}
+
+.leaflet-bar a.leaflet-disabled {
+  background-color: var(--navy);
+  color: var(--navy-line);
+}
+
+.leaflet-touch .leaflet-control-zoom-in,
+.leaflet-touch .leaflet-control-zoom-out {
+  font-size: 20px;
+}
+
+.leaflet-pm-toolbar .button-container a.leaflet-buttons-control-button {
+  border-radius: 0;
+}
+
+.leaflet-pm-toolbar .button-container.active .leaflet-buttons-control-button {
+  background-color: var(--signal);
+}
+
+/* Geoman's icons are black background images */
+.leaflet-pm-toolbar .control-icon {
+  filter: invert(1);
+}
+
+.leaflet-pm-toolbar .button-container.active .control-icon {
+  filter: none;
+}
+
+.leaflet-pm-toolbar .leaflet-pm-actions-container .leaflet-pm-action {
+  background: var(--signal);
+  color: var(--signal-ink);
+  font-weight: 700;
+}
+
+.leaflet-pm-toolbar .leaflet-pm-actions-container .leaflet-pm-action:hover {
+  background: #ffd23f;
+}
+
+.leaflet-control-scale-line {
+  padding: 2px 7px 1px;
+  border: 2px solid var(--navy);
+  border-top: none;
+  background: rgb(255 255 255 / 0.85);
+  color: var(--navy);
+  font-size: 11px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  /* Leaflet's white offset shadow doubles the text */
+  text-shadow: none;
+}
+
+.leaflet-tooltip {
+  border: none;
+  border-radius: 8px;
+  background: var(--navy);
+  color: var(--on-navy);
+  box-shadow: var(--shadow);
+}
+
+.leaflet-tooltip-top::before {
+  border-top-color: var(--navy);
+}
+.leaflet-tooltip-bottom::before {
+  border-bottom-color: var(--navy);
+}
+.leaflet-tooltip-left::before {
+  border-left-color: var(--navy);
+}
+.leaflet-tooltip-right::before {
+  border-right-color: var(--navy);
 }

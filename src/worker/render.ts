@@ -1,7 +1,8 @@
-// Terrain images from the raw heightmap: flat water/land (FINDINGS §8 colours) and a hillshaded variant.
+// Terrain images from the raw heightmap: flat water/land (FINDINGS §8 water colours) and a hillshaded variant.
 import { RAW_PER_M, RAW_ZERO, type Raster } from '../parser';
 
-const LAND = [225, 225, 218];
+/** a very light sage, so land reads as countryside next to the navy chrome */
+const LAND = [226, 236, 214];
 const WATER = [70, 110, 160];
 const WATER_SHALLOW = [104, 144, 190];
 const EXAGGERATION = 2;

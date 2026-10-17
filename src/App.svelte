@@ -173,7 +173,7 @@
 <style>
   .layout {
     display: grid;
-    grid-template-columns: 320px 1fr;
+    grid-template-columns: 336px 1fr;
     height: 100vh;
   }
   main {
@@ -197,11 +197,12 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 6px 12px;
+    padding: 6px 14px;
     border-radius: 999px;
-    background: var(--panel);
-    color: var(--text);
-    box-shadow: 0 1px 4px rgb(0 0 0 / 0.25);
+    background: var(--navy);
+    color: var(--on-navy);
+    box-shadow: var(--shadow);
+    font-weight: 600;
     font-size: 13px;
     font-variant-numeric: tabular-nums;
     transform: translateX(-50%);
@@ -210,8 +211,8 @@
   .spinner {
     width: 12px;
     height: 12px;
-    border: 2px solid var(--muted);
-    border-top-color: var(--accent);
+    border: 2px solid var(--navy-line);
+    border-top-color: var(--signal);
     border-radius: 50%;
     animation: spin 0.8s linear infinite;
   }
@@ -226,10 +227,14 @@
     z-index: 2000;
     display: grid;
     place-items: center;
-    background: rgb(28 126 214 / 0.25);
+    margin: 12px;
+    border: 4px dashed var(--signal);
+    border-radius: 18px;
+    background: rgb(20 33 61 / 0.6);
+    backdrop-filter: blur(2px);
     color: #fff;
     font-size: 24px;
-    font-weight: 600;
+    font-weight: 650;
     text-shadow: 0 1px 3px rgb(0 0 0 / 0.5);
     pointer-events: none;
   }
