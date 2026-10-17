@@ -89,6 +89,21 @@ for (const [save, out] of [['2.sav', '2sav'], ['1.sav', '1sav']] as const) {
   });
 }
 
+// Fresh games: most towns have no townEntity record, and some towns share a building count.
+for (const [save, n] of [['test3.sav', 5], ['test4.sav', 16], ['test5.sav', 21]] as const) {
+  const path = savePath(save);
+  describe.skipIf(!path)(save, () => {
+    it(`finds all ${n} towns, each paired with its own records`, () => {
+      const r = parseSave(new Uint8Array(zstdDecompressSync(readFileSync(path!))), save);
+      expect(r.warnings).toEqual([]);
+      expect(r.world.towns.length).toBe(n);
+      expect(new Set(r.world.towns.map((t) => t.name)).size).toBe(n);
+      const ids = r.offsets.town_ids;
+      expect(ids).toEqual(ids.map((_, i) => ids[0] + i));
+    });
+  });
+}
+
 describe.skipIf(!savePath('1.sav'))('fzstd', () => {
   it('decompresses like native zstd', () => {
     const c = new Uint8Array(readFileSync(savePath('1.sav')!));

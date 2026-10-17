@@ -160,13 +160,13 @@
     const base = { renderer, interactive: false, pmIgnore: true, snapIgnore: true, lineCap: 'butt' } as L.PolylineOptions;
     const group = L.layerGroup();
     const add = (es: Edge[], o: L.PolylineOptions) => { if (es.length) L.polyline(es.map(line), { ...base, ...o }).addTo(group); };
-    const colour = (e: Edge) => (e.electric ? '#1f4e8c' : '#2b2b2b');
+    const colour = (electric: boolean) => (electric ? '#1f4e8c' : '#2b2b2b');
     const tunnels = edges.filter((e) => e.structure === 'tunnel');
     const open = edges.filter((e) => e.structure !== 'tunnel');
     // tunnels first, underneath everything
     for (const electric of [false, true]) {
       add(tunnels.filter((e) => e.electric === electric && e.kind !== 'industry'),
-        { color: electric ? '#1f4e8c' : '#2b2b2b', weight: 3, opacity: 0.45, dashArray: '3 5' });
+        { color: colour(electric), weight: 3, opacity: 0.45, dashArray: '3 5' });
     }
     add(tunnels.filter((e) => e.kind === 'industry'), { color: '#5c5c5c', weight: 2, opacity: 0.45, dashArray: '3 5' });
     // bridge casing below the track
@@ -176,7 +176,7 @@
     add(open.filter((e) => e.kind === 'industry'), { color: '#5c5c5c', weight: 2 });
     for (const electric of [false, true]) {
       const es = open.filter((e) => e.kind !== 'industry' && e.electric === electric);
-      add(es, { color: colour(es[0] ?? edges[0]), weight: 4 });
+      add(es, { color: colour(electric), weight: 4 });
       add(es, { color: '#ffffff', weight: 1.6, dashArray: '6 6' });
     }
     return group;

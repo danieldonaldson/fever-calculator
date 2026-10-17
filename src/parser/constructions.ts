@@ -6,7 +6,10 @@ export interface Industry { type: string; x: number; y: number; z: number; offse
 export type BuildingKind = 'r' | 'c' | 'i';
 /** Cargo a town building asks for (params.cargoTypes): cargo name and the game's factor (1, 0.5, 0.25 seen). */
 export type CargoNeed = [cargo: string, factor: number];
-export interface Building { kind: BuildingKind; capacity: number; cargo: CargoNeed[]; x: number; y: number; offset: number }
+/** `footprint`: "<width>x<depth>" in parcels, from the path (`3x4_03` -> "3x4"); pairs buildings with TownBuilding records. */
+export interface Building {
+  kind: BuildingKind; capacity: number; cargo: CargoNeed[]; footprint: string; x: number; y: number; offset: number;
+}
 
 // "::/cargos/fish/fish.cargo" -> "fish"
 const cargoId = (path: string) => path.match(/cargos\/([^/]+)\//)?.[1] ?? path;
@@ -80,7 +83,7 @@ export function constructions(b: Bytes) {
       const cap = params.get('capacity');
       buildings.push({
         kind, capacity: typeof cap === 'number' ? cap : Number(cap ?? 0), cargo: cargoNeeds(params.get('cargoTypes')),
-        x: t[12], y: t[13], offset: s - 4,
+        footprint: seg[3]?.match(/^(\d+x\d+)_/)?.[1] ?? '?', x: t[12], y: t[13], offset: s - 4,
       });
       first.building ??= s - 4;
     }

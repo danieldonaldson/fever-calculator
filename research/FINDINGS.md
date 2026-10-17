@@ -139,6 +139,10 @@ There is **no stored town-centre position** (searched). Method:
    `2.sav`: ids 31366–31375 (first at 380,494,185). `1.sav`: 32428–32437.
    Sorted ids ↔ NAME[1..T]. Cross-check in `2.sav`: notification `townName = "Alba"` has
    id 31369 = NAME[4] ✓.
+   **Not every town has one** (2026-10-17): fresh games `test3/4/5.sav` have 1 of 5, 1 of 16 and
+   2 of 21. Town ids are consecutive, so the TS parser only uses these as seeds and takes the
+   full id list from the TownBuilding records (step 2), searching the seeds' 256-id blocks and
+   any neighbouring block the ids reach. The Python reference still uses these ids only.
 2. **TownBuilding component records** (one per town building; API fields
    personCapacity, stockList, construction, level, parcels, depth, height, town, timeBuilt).
    Signature used: `u32 depth ∈ 1..4, f32 height ∈ (2, 300), u32 townId ∈ ids` (then i64
@@ -148,18 +152,22 @@ There is **no stored town-centre position** (searched). Method:
    Example (`2.sav`): `04000000 | f2570200 8e580200 88590200 8f590200` (4 parcel ids) then
    `04000000` depth=4, `fa6d5b41` height=13.71, `8b7a0000` town=31371,
    `003e880200000000` timeBuilt.
-   **Lead, not verified:** each record seems to begin
-   `u32 personCapacity, u32 stockList(-1), u32 ?(1), u32 construction entity, u8 ?, u32 nParcels…`.
-   If the construction entity can be tied to a construction record, buildings map to towns
-   directly and step 3 becomes unnecessary.
+   Just before `depth` is `u32 nParcels, nParcels × u32 parcel id`. **nParcels × depth equals the
+   `WxD` in the building's path** (`3x4_03` → 3×4), checked on every building of 5 saves. The
+   first u32 of a record is an entity id, not personCapacity (an earlier guess).
 3. **Cluster** building positions by single linkage (start at 180 m; try 150, 210, 120,
    250, 100, 300, 80, 400 until the sorted cluster sizes equal the sorted TownBuilding
    per-town counts). Then pair clusters with towns by size.
    - `2.sav` counts: 722, 680, 646, 636, 587, 490, 320, 271, 233, 205 (180 m works).
    - `1.sav` counts: 348, 291, 241, 206, 200, 181, 162, 143, 112, 88 (180 m works).
    - TownBuilding order ≠ construction order (tested: mapping by index is wrong).
-   - Fails if two towns have equal counts (the script warns) or towns have merged
-     (sizes never match, so the script exits). Fix via the lead in step 2.
+   - Python: fails if two towns have equal counts (the script warns) or towns have merged
+     (sizes never match, so the script exits).
+   - **TS parser:** pairs clusters with towns by their histogram of footprints (`WxD` per building
+     vs nParcels×depth per TownBuilding record), which is distinct for every town in all saves
+     seen, including `test4/5.sav` where sizes tie. If no radius matches exactly, it keeps the
+     closest one when ≤ max(4, 1%) buildings differ, and warns: `autosave_2_1952-04-24.sav` has
+     4,752 records but 4,751 buildings (one in Bacoli), probably saved mid-build.
 4. Per town: **three centres** = mean x,y of its residential / commercial / industrial
    buildings; **capacity** per kind = sum of `capacity`. **Population = residential capacity**,
    which is what the game's town HUD shows (`gui/main/town_hud_react_util.tl`). User accepted

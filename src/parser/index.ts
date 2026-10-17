@@ -71,14 +71,12 @@ export function parseSave(data: Uint8Array, source: string, progress: Progress =
   if (nt.warning) warnings.push(nt.warning);
 
   progress('Finding towns');
-  const { ids, first: teOff } = townIds(b);
-  if (!ids.length) throw new Error('no town ids found (no townEntity records)');
-  const tb = townBuildings(b, ids);
-  if (tb.towns.length !== buildings.length) {
-    warnings.push(`TownBuilding count ${tb.towns.length} != building constructions ${buildings.length}`);
-  }
-  const tw = towns(buildings, tb.towns, ids, nt.names);
-  if (tw.warning) warnings.push(tw.warning);
+  const { ids: seeds, first: teOff } = townIds(b);
+  if (!seeds.length) throw new Error('no town ids found (no townEntity records)');
+  const tb = townBuildings(b, seeds);
+  const ids = tb.ids;
+  const tw = towns(buildings, tb.records, ids, nt.names);
+  warnings.push(...tw.warnings);
 
   progress('Reading railways');
   const rails = edges(b).filter((e) => e.network === 'track');
