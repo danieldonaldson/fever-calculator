@@ -123,6 +123,13 @@ i64 timeBuilt            (game ms)
 - **Locator (name-independent)**: find all `07 00 00 00 "no name"`, take the densest run
   (gaps < 8 KB), walk backwards string-by-string (find q with `q + 4 + u32(q) == p`)
   until no valid string precedes; the u32 before the first string is the count.
+- **Not in entity-id order in general** (campaign save, 2026-10-17): 4,435 entries but ids up to
+  ~52k, and town ids 13698, 15346, 29612, 38967, 44318 (names from the mission's
+  `mission_localization_01.tl`) sit at NAME 1, 660, 3635, 3098, 3940. That isn't id order, not
+  `id mod B` for any B, and no dense id array, sparse id→index array or ordered entity list
+  linking them was found. So it's probably insertion order with swap-on-delete. Fresh games
+  keep the towns at [1..T]; the TS parser names towns only up to the first gap larger than the
+  town count, and the rest get `Town <id>` plus a warning.
 - This table is the **only full copy** of town names. Partial copies exist in town
   notification state (§5), but they're snapshots, so ignore them.
 - Renaming a town changes the string here, and the tool picks it up. Linking is by id
@@ -216,6 +223,12 @@ N × (u32 S (=4225 = 65²), S × u16 raw height)
   before = (0, N), the list before that with header (N, 2), unique tile coords, then N
   contiguous `u32 S + samples`. Use a lookahead: plain `finditer` skipped the real match
   because an earlier overlapping match consumed it.
+- **Campaign save** (`Saving Mardi Gras1.sav`, 2026-10-17): 32×32 tiles (−16..15). The tile
+  list (header at 85,929,679) is followed by `u32 0, u32 N` and then a ~4.3 MB block
+  (`63, 1, 32, 33, 65536, …`, meaning unknown) before the samples, whose header is
+  `u32 38, u32 14, 0, 0, 0, N` (38 instead of 0xFFFFFFFF). The TS locator therefore anchors on
+  `u32 14, 0, 0, 0, N, S` + N contiguous tiles, then takes the nearest valid tile list before it
+  (ending in `0, N`). The Python reference still needs the 0xFFFFFFFF layout.
 - Assumptions: water level 0 (the Terrain component has `waterLevel`; not located), tile
   size 256 m (consistent so far).
 

@@ -22,5 +22,5 @@ pnpm check      # svelte-check (TypeScript 7 via --tsgo)
 pnpm build      # static site in dist/
 ```
 
-The golden tests need the real saves `1.sav` and `2.sav` (and fresh-game `test3.sav`–`test5.sav`). They look in the Steam userdata folder
+The golden tests need the real saves `1.sav` and `2.sav` (fresh-game `test3.sav`–`test5.sav`, and the campaign save `Saving Mardi Gras1.sav`). They look in the Steam userdata folder
 for TF3 (app 3493540), or in `$FEVER_SAVE_DIR`, and are skipped when the saves aren't there.

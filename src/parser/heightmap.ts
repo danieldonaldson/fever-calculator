@@ -1,5 +1,5 @@
 // Terrain heightmap (FINDINGS §6).
-import { findAll, type Bytes } from './bytes';
+import { findAll, le32, type Bytes } from './bytes';
 
 export const TILE_M = 256;
 export const RAW_PER_M = 20;
@@ -14,11 +14,13 @@ export interface Heightmap {
   end_offset: number;
 }
 
-const FF4 = new Uint8Array([0xff, 0xff, 0xff, 0xff]);
+// `u32 14, 0, 0, 0` just before `u32 N, u32 S` and the samples. The u32 before it is
+// 0xFFFFFFFF in 1.sav/2.sav but 38 in the campaign save, so it isn't checked.
+const SAMPLES_HEAD = new Uint8Array([14, 0, 0, 0, ...new Array(12).fill(0)]);
 
-/** Port of the lookahead `(?=\xff{4}.{4}\0{12}(N)(S))`: every overlapping 0xFFFFFFFF is a candidate. */
+/** Every `u32 14, 0, 0, 0, N, S` is a candidate; the first that validates wins. */
 export function heightmap(b: Bytes): Heightmap {
-  for (const at of findAll(b.u8, FF4)) {
+  for (const at of findAll(b.u8, SAMPLES_HEAD)) {
     try {
       const hm = tryAt(b, at);
       if (hm) return hm;
@@ -30,24 +32,10 @@ export function heightmap(b: Bytes): Heightmap {
 }
 
 function tryAt(b: Bytes, at: number): Heightmap | null {
-  if (at < 8 || at + 28 > b.length) return null;
-  for (let k = 8; k < 20; k++) if (b.u8[at + k] !== 0) return null;
-  const n = b.u32(at + 20), s = b.u32(at + 24);
+  const n = b.u32(at + 16), s = b.u32(at + 20);
   const side = Math.round(Math.sqrt(s));
   if (!(n > 0 && n < 100_000 && side * side === s && side > 2)) return null;
-  if (b.u32(at - 4) !== n || b.u32(at - 8) !== 0) return null;
-  const lst = at - 8 - 12 * n;
-  if (lst < 8 || b.u32(lst - 8) !== n || b.u32(lst - 4) !== 2) return null;
-  const tiles: [number, number][] = [];
-  const seen = new Set<string>();
-  for (let i = 0; i < n; i++) {
-    const x = b.i32(lst + 12 * i), y = b.i32(lst + 12 * i + 4);
-    if (Math.abs(x) > 4096 || Math.abs(y) > 4096) return null;
-    seen.add(`${x},${y}`);
-    tiles.push([x, y]);
-  }
-  if (seen.size !== n) return null;
-  let q = at + 24; // first tile's u32 sample count
+  let q = at + 20; // first tile's u32 sample count
   const offs: number[] = [];
   for (let i = 0; i < n; i++) {
     if (b.u32(q) !== s) break;
@@ -55,7 +43,34 @@ function tryAt(b: Bytes, at: number): Heightmap | null {
     q += 4 + 2 * s;
   }
   if (offs.length !== n) return null;
-  return { tiles, offs, side, list_offset: lst - 8, data_offset: at + 24, end_offset: q };
+  const lst = tileList(b, n, at);
+  if (lst === null) return null;
+  const tiles: [number, number][] = [];
+  for (let i = 0; i < n; i++) tiles.push([b.i32(lst + 12 * i), b.i32(lst + 12 * i + 4)]);
+  return { tiles, offs, side, list_offset: lst - 8, data_offset: at + 20, end_offset: q };
+}
+
+/**
+ * The nearest `u32 N, u32 2, N × (i32 x, i32 y, u32 v), u32 0, u32 N` before the samples.
+ * In 1.sav/2.sav it ends 8 bytes before the 0xFFFFFFFF; the campaign save has a ~4 MB
+ * block in between (FINDINGS §6).
+ */
+function tileList(b: Bytes, n: number, before: number): number | null {
+  const head = new Uint8Array([...le32(n), 2, 0, 0, 0]);
+  const cands = findAll(b.u8.subarray(0, before), head);
+  for (let c = cands.length - 1; c >= 0; c--) {
+    const lst = cands[c] + 8, end = lst + 12 * n;
+    if (end + 8 > before || b.u32(end) !== 0 || b.u32(end + 4) !== n) continue;
+    const seen = new Set<string>();
+    let ok = true;
+    for (let i = 0; i < n && ok; i++) {
+      const x = b.i32(lst + 12 * i), y = b.i32(lst + 12 * i + 4);
+      ok = Math.abs(x) <= 4096 && Math.abs(y) <= 4096;
+      seen.add(`${x},${y}`);
+    }
+    if (ok && seen.size === n) return lst;
+  }
+  return null;
 }
 
 export interface Raster {

@@ -118,6 +118,20 @@ describe.skipIf(!savePath('test5.sav'))('town search', () => {
   });
 });
 
+// Campaign mission 01: a 32×32 map with an extra block before the heightmap samples, and towns whose
+// ids aren't consecutive (names for 15346, 29612, … per the mission's mission_localization_01.tl).
+describe.skipIf(!savePath('Saving Mardi Gras1.sav'))('Saving Mardi Gras1.sav', () => {
+  it('finds the heightmap and names only the town it can link', () => {
+    const path = savePath('Saving Mardi Gras1.sav')!;
+    const r = parseSave(new Uint8Array(zstdDecompressSync(readFileSync(path))), 'Saving Mardi Gras1.sav');
+    expect(r.world.terrain.tiles_x).toEqual([-16, 15]);
+    expect(r.offsets.town_ids).toEqual([13698, 15346, 29612, 38967, 44318]);
+    expect(r.world.towns.map((t) => t.name).sort()).toEqual(
+      ['New Orleans', 'Town 15346', 'Town 29612', 'Town 38967', 'Town 44318']);
+    expect(r.warnings).toContain("4 town names can't be read (town ids aren't consecutive)");
+  });
+});
+
 describe('town pairing', () => {
   // Footprint histograms: clusters A {p} and B {p:3, r}; towns X {p:2} and Y {p, q:2}.
   // Cheapest pair first (A-X, then B-Y) costs 1 + 5; the best pairing (A-Y, B-X) costs 2 + 2.
