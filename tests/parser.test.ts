@@ -6,6 +6,9 @@ import { describe, expect, it } from 'vitest';
 import { decompressSave } from '../src/parser/decompress';
 import { pyRound, pySum } from '../src/parser/bytes';
 import { parseSave } from '../src/parser';
+import { Bytes } from '../src/parser/bytes';
+import { townBuildings, townIds, towns } from '../src/parser/towns';
+import type { Building } from '../src/parser/constructions';
 import { savePath } from './saves';
 
 const research = (p: string) => new URL(`../research/${p}`, import.meta.url);
@@ -103,6 +106,36 @@ for (const [save, n] of [['test3.sav', 5], ['test4.sav', 16], ['test5.sav', 21]]
     });
   });
 }
+
+describe.skipIf(!savePath('test5.sav'))('town search', () => {
+  it('ignores seeds outside the town records', () => {
+    const b = new Bytes(new Uint8Array(zstdDecompressSync(readFileSync(savePath('test5.sav')!))));
+    const { ids: seeds } = townIds(b);
+    const want = townBuildings(b, seeds);
+    const got = townBuildings(b, [...seeds, 5_000_000, -1, NaN]);
+    expect(got.ids).toEqual(want.ids);
+    expect(got.records.length).toBe(want.records.length);
+  });
+});
+
+describe('town pairing', () => {
+  // Footprint histograms: clusters A {p} and B {p:3, r}; towns X {p:2} and Y {p, q:2}.
+  // Cheapest pair first (A-X, then B-Y) costs 1 + 5; the best pairing (A-Y, B-X) costs 2 + 2.
+  const bld = (footprint: string, x: number): Building =>
+    ({ kind: 'r', capacity: 1, cargo: [], footprint, x, y: 0, offset: 0 });
+  const blds = [bld('p', 0), ...['p', 'p', 'p', 'r'].map((f, i) => bld(f, 10_000 + 10 * i))];
+  const recs = ['p', 'p'].map((footprint) => ({ town: 10, footprint }))
+    .concat(['p', 'q', 'q'].map((footprint) => ({ town: 11, footprint })));
+
+  it('minimises the total distance', () => {
+    const { towns: out } = towns(blds, recs, [10, 11], ['', 'X', 'Y']);
+    expect(out.map((t) => [t.name, t.buildings])).toEqual([['X', 4], ['Y', 1]]);
+  });
+  it('looks names up by id, so a town missing from the records keeps the right name', () => {
+    const { towns: out } = towns(blds, recs.map((r) => ({ ...r, town: r.town === 11 ? 12 : r.town })), [10, 12], ['', 'X', 'Y', 'Z']);
+    expect(out.map((t) => t.name)).toEqual(['X', 'Z']);
+  });
+});
 
 describe.skipIf(!savePath('1.sav'))('fzstd', () => {
   it('decompresses like native zstd', () => {

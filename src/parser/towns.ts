@@ -50,33 +50,56 @@ function densestRun(b: Bytes, candidates: number[]): [number, number][] {
 }
 
 /**
+ * nParcels for the record whose depth is at h: the n whose u32 at h - 4 - 4n equals n, with
+ * the n parcel ids between them all > 16 (parcel ids are entity ids, so never that small).
+ */
+function parcels(b: Bytes, h: number): number | null {
+  for (let n = 1; n <= 16 && h - 4 - 4 * n >= 0; n++) {
+    if (b.u32(h - 4 - 4 * n) !== n) continue;
+    let ok = true;
+    for (let k = 1; k <= n && ok; k++) ok = b.u32(h - 4 * k) > 16;
+    if (ok) return n;
+  }
+  return null;
+}
+
+/**
  * TownBuilding: … u32 nParcels, nParcels × u32 parcel, u32 depth(1-4), f32 height, u32 town, i64 timeBuilt …
  * Port of the regex `[\x01-\x04]\0\0\0.{4}(?:ids)` with finditer's non-overlapping scan,
  * then the height filter. Keeps the densest contiguous run (records are ~45-55 bytes apart).
  * townEntity records exist only for some towns (one of five in a fresh game), so `seeds` only
- * anchor the search. Town ids are consecutive: any id in the seeds' 256-id blocks counts, and a
- * neighbouring block is searched too while the ids found reach a block edge.
+ * anchor the search. Town ids are consecutive: the towns are the seeds found in the run plus the
+ * ids next to them, extended one at a time while the run has records for the next id. The seeds'
+ * 256-id blocks are searched, then any block that range reaches into.
  * `footprint` is nParcels x depth, which equals the building path's "WxD".
  */
 export function townBuildings(b: Bytes, seeds: number[]): { records: TownBuildingRecord[]; ids: number[]; first: number } {
+  const valid = seeds.filter((t) => Number.isInteger(t) && t >= 0 && t <= 0xffffffff);
+  if (!valid.length) throw new Error('no valid town ids found (townEntity ids out of range)');
   const searched = new Map<number, number[]>();
-  const search = (block: number) => { if (block >= 0 && !searched.has(block)) searched.set(block, candidatesIn(b, block)); };
-  for (let k = Math.min(...seeds) >>> 8; k <= Math.max(...seeds) >>> 8; k++) search(k);
-  let run: [number, number][], ids: number[];
+  const search = (block: number) => { if (block >= 0 && block <= 0xffffff && !searched.has(block)) searched.set(block, candidatesIn(b, block)); };
+  for (const t of valid) search(t >>> 8);
+  let run: [number, number][], lo: number, hi: number, inRun: Set<number>;
   for (;;) {
     run = densestRun(b, [...searched.values()].flat());
-    ids = [...new Set(run.map(([, t]) => t))].sort((a, z) => a - z);
+    inRun = new Set(run.map(([, t]) => t));
+    const anchors = valid.filter((t) => inRun.has(t));
+    if (!anchors.length) throw new Error('no TownBuilding records for the townEntity ids');
+    lo = Math.min(...anchors); hi = Math.max(...anchors);
+    while (inRun.has(lo - 1)) lo--;
+    while (inRun.has(hi + 1)) hi++;
     const n = searched.size;
-    if (ids[0] % 256 === 0) search((ids[0] >>> 8) - 1);
-    if (ids[ids.length - 1] % 256 === 255) search((ids[ids.length - 1] >>> 8) + 1);
+    // A range ending on a block edge may continue into the next block.
+    for (let k = (lo >>> 8) - (lo % 256 === 0 ? 1 : 0); k <= (hi >>> 8) + (hi % 256 === 255 ? 1 : 0); k++) search(k);
     if (searched.size === n) break;
   }
-  const records = run.map(([h, town]) => {
-    let n = 1;
-    while (n <= 16 && b.u32(h - 4 - 4 * n) !== n) n++;
-    return { town, footprint: n <= 16 ? `${n}x${b.u8[h]}` : '?' };
+  const ids = [...inRun].filter((t) => t >= lo && t <= hi).sort((a, z) => a - z);
+  const kept = run.filter(([, t]) => t >= lo && t <= hi);
+  const records = kept.map(([h, town]) => {
+    const n = parcels(b, h);
+    return { town, footprint: n ? `${n}x${b.u8[h]}` : '?' };
   });
-  return { records, ids, first: run[0][0] };
+  return { records, ids, first: kept[0][0] };
 }
 
 type Histogram = Map<string, number>;
@@ -94,17 +117,48 @@ function distance(a: Histogram, z: Histogram): number {
   return d;
 }
 
-/** Pairs each cluster with a town, closest footprint histograms first. Returns town index per cluster. */
-function pair(cls: Histogram[], tws: Histogram[]): { town: number[]; cost: number } {
-  const pairs = cls.flatMap((c, i) => tws.map((t, j) => [distance(c, t), i, j]));
-  pairs.sort((a, z) => a[0] - z[0] || a[1] - z[1] || a[2] - z[2]);
-  const town = cls.map(() => -1), taken = new Set<number>();
-  let cost = 0;
-  for (const [d, i, j] of pairs) {
-    if (town[i] >= 0 || taken.has(j)) continue;
-    town[i] = j; taken.add(j); cost += d;
+/**
+ * Pairs each cluster with a town so the total distance is smallest (Hungarian method on the
+ * square cost matrix; there are as many clusters as towns). Returns town index per cluster.
+ */
+function pair(cost: number[][]): { town: number[]; cost: number } {
+  const n = cost.length, INF = Infinity;
+  const u = new Array(n + 1).fill(0), v = new Array(n + 1).fill(0);
+  const p = new Array(n + 1).fill(0), way = new Array(n + 1).fill(0);
+  for (let i = 1; i <= n; i++) {
+    p[0] = i;
+    let j0 = 0;
+    const minv = new Array(n + 1).fill(INF), used = new Array(n + 1).fill(false);
+    do {
+      used[j0] = true;
+      const i0 = p[j0];
+      let delta = INF, j1 = 0;
+      for (let j = 1; j <= n; j++) {
+        if (used[j]) continue;
+        const cur = cost[i0 - 1][j - 1] - u[i0] - v[j];
+        if (cur < minv[j]) { minv[j] = cur; way[j] = j0; }
+        if (minv[j] < delta) { delta = minv[j]; j1 = j; }
+      }
+      for (let j = 0; j <= n; j++) {
+        if (used[j]) { u[p[j]] += delta; v[j] -= delta; } else minv[j] -= delta;
+      }
+      j0 = j1;
+    } while (p[j0] !== 0);
+    do { const j1 = way[j0]; p[j0] = p[j1]; j0 = j1; } while (j0);
   }
-  return { town, cost };
+  const town = new Array(n).fill(-1);
+  for (let j = 1; j <= n; j++) town[p[j] - 1] = j - 1;
+  return { town, cost: town.reduce((s, j, i) => s + cost[i][j], 0) };
+}
+
+/** True if swapping the towns of some two clusters gives the same total cost. */
+function ambiguous(cost: number[][], town: number[]): boolean {
+  for (let i = 0; i < town.length; i++) {
+    for (let k = i + 1; k < town.length; k++) {
+      if (cost[i][town[k]] + cost[k][town[i]] === cost[i][town[i]] + cost[k][town[k]]) return true;
+    }
+  }
+  return false;
 }
 
 /** Single-linkage clusters at radius R, largest first (stable for equal sizes). */
@@ -181,13 +235,16 @@ const RADII = [180, 150, 210, 120, 250, 100, 300, 80, 400];
  * otherwise keeps the closest radius if few buildings differ (a save written mid-build).
  */
 export function towns(blds: Building[], recs: TownBuildingRecord[], ids: number[], names: string[]) {
-  const want = ids.map((id) => histogram(recs.filter((r) => r.town === id).map((r) => r.footprint)));
-  let best: { cls: number[][]; town: number[]; cost: number; R: number } | null = null;
+  const byTown = new Map<number, string[]>(ids.map((id) => [id, []]));
+  for (const r of recs) byTown.get(r.town)?.push(r.footprint);
+  const want = ids.map((id) => histogram(byTown.get(id)!));
+  let best: { cls: number[][]; town: number[]; cost: number; costs: number[][]; R: number } | null = null;
   for (const R of RADII) {
     const cls = cluster(blds, R);
     if (cls.length !== ids.length) continue;
-    const p = pair(cls.map((c) => histogram(c.map((i) => blds[i].footprint))), want);
-    if (!best || p.cost < best.cost) best = { cls, ...p, R };
+    const costs = cls.map((c) => histogram(c.map((i) => blds[i].footprint))).map((h) => want.map((w) => distance(h, w)));
+    const p = pair(costs);
+    if (!best || p.cost < best.cost) best = { cls, ...p, costs, R };
     if (!p.cost) break;
   }
   const tolerance = Math.max(4, Math.ceil(blds.length / 100));
@@ -196,17 +253,17 @@ export function towns(blds: Building[], recs: TownBuildingRecord[], ids: number[
       ? `building clusters differ from the town records by ${best.cost} buildings`
       : `buildings never formed ${ids.length} clusters (towns merged?)`);
   }
-  const { cls, town, cost, R } = best;
+  const { cls, town, cost, costs, R } = best;
   const warnings: string[] = [];
   if (cost) warnings.push(`${cost} town buildings don't match the town records (saved mid-build?)`);
-  if (want.some((h, i) => want.some((g, j) => i < j && !distance(h, g)))) {
-    warnings.push('two towns have identical buildings; their names may be swapped');
+  if (ambiguous(costs, town)) {
+    warnings.push('two towns match their building clusters equally well; their names may be swapped');
   }
 
   const out: Town[] = cls.map((c, n) => {
     const id = ids[town[n]];
     const t: Town = {
-      id, name: names[1 + town[n]] ?? `Town ${id}`, buildings: c.length, cluster_radius_m: R,
+      id, name: names[1 + id - ids[0]] ?? `Town ${id}`, buildings: c.length, cluster_radius_m: R,
       centers: {}, capacity: { residential: 0, commercial: 0, industrial: 0 }, population: 0,
       demand: { commercial: [], industrial: [] },
     };

@@ -8,21 +8,12 @@ export interface Chain { inputs: string[]; outputs: string[] }
 const CHAINS = chains as Record<string, Chain>;
 const NAMES = names as Record<string, string>;
 
-// One emoji per base-game industry type: the icon of its main output cargo (see CARGO_ICONS).
-const ICONS: Record<string, string> = {
-  brewery: '🍾', bricks_works: '🧱', cement_plant: '🪣', chemical_plant: '🎨', clay_pit: '🏺',
-  coal_mine: '⚫', cotton_farm: '🧶', farm: '🌾', fishing_grounds: '🐠', food_factory: '🥫',
-  forest: '🪵', furniture_factory: '🛋️', glass_works: '🪟', iron_ore_mine: '🟠', livestock_farm: '🥩',
-  machine_factory: '⚙️', oil_platform: '💧', oil_refinery: '🔥', oil_well: '💧', paper_mill: '📄',
-  printing_press: '📚', quarry: '🪨', rubber_farm: '🌴', sand_excavator: '🏜️', sand_pit: '🏜️',
-  saw_mill: '🟫', steel_mill: '🏗️', textile_factory: '👕', tire_factory: '🛞', tool_factory: '🔧',
-  vehicle_factory: '🚗', weaving_mill: '🧵',
-};
+// Industries whose main output is not their first listed one.
+const MAIN_OUTPUT: Record<string, string> = { oil_refinery: 'fuel', steel_mill: 'steel' };
 
 export const industryName = (type: string) => NAMES[type] ?? type.replaceAll('_', ' ');
 export type LabelMode = 'zoom' | 'always' | 'off';
 
-export const industryIcon = (type: string) => ICONS[type] ?? '🏭';
 export const chainOf = (type: string): Chain => CHAINS[type] ?? { inputs: [], outputs: [] };
 export const cargoName = (c: string) => c.replaceAll('_', ' ');
 
@@ -35,6 +26,12 @@ const CARGO_ICONS: Record<string, string> = {
   wool: '🧶',
 };
 export const cargoIcon = (c: string) => CARGO_ICONS[c] ?? '📦';
+
+/** One emoji per industry type: the icon of its main output cargo. */
+export const industryIcon = (type: string) => {
+  const c = MAIN_OUTPUT[type] ?? chainOf(type).outputs[0];
+  return c && c in CARGO_ICONS ? CARGO_ICONS[c] : '🏭';
+};
 
 /** Industry types whose output includes `cargo`. */
 export const producersOf = (cargo: string) =>
