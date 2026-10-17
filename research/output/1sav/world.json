@@ -1,0 +1,595 @@
+{
+ "source": "1.sav",
+ "coords": "world metres, origin at map centre, +x east, +y north",
+ "terrain": {
+  "tile_m": 256.0,
+  "samples_per_tile": 65,
+  "sample_m": 4.0,
+  "tiles_x": [
+   -22,
+   21
+  ],
+  "tiles_y": [
+   -22,
+   21
+  ],
+  "extent_m": [
+   -5632.0,
+   -5632.0,
+   5632.0,
+   5632.0
+  ],
+  "height_formula": "raw / 20 - 100",
+  "water": "raw < 2000 (water level 0 m)"
+ },
+ "towns": [
+  {
+   "id": 32432,
+   "name": "St\u00f6de",
+   "buildings": 348,
+   "cluster_radius_m": 180,
+   "centers": {
+    "residential": [
+     -488.3,
+     2098.8
+    ],
+    "commercial": [
+     -344.9,
+     2373.2
+    ],
+    "industrial": [
+     -638.9,
+     2399.9
+    ]
+   },
+   "capacity": {
+    "residential": 895,
+    "commercial": 608,
+    "industrial": 664
+   },
+   "population": 895
+  },
+  {
+   "id": 32428,
+   "name": "Mariestad",
+   "buildings": 291,
+   "cluster_radius_m": 180,
+   "centers": {
+    "residential": [
+     1549.2,
+     4436.3
+    ],
+    "commercial": [
+     1767.8,
+     4613.8
+    ],
+    "industrial": [
+     1514.3,
+     4720.3
+    ]
+   },
+   "capacity": {
+    "residential": 654,
+    "commercial": 505,
+    "industrial": 568
+   },
+   "population": 654
+  },
+  {
+   "id": 32437,
+   "name": "Karlskoga",
+   "buildings": 241,
+   "cluster_radius_m": 180,
+   "centers": {
+    "residential": [
+     4486.4,
+     -302.8
+    ],
+    "commercial": [
+     4773.7,
+     -30.9
+    ],
+    "industrial": [
+     4542.4,
+     -68.1
+    ]
+   },
+   "capacity": {
+    "residential": 408,
+    "commercial": 444,
+    "industrial": 255
+   },
+   "population": 408
+  },
+  {
+   "id": 32433,
+   "name": "Sammakko",
+   "buildings": 206,
+   "cluster_radius_m": 180,
+   "centers": {
+    "residential": [
+     -4210.6,
+     69.6
+    ],
+    "commercial": [
+     -4135.9,
+     360.7
+    ],
+    "industrial": [
+     -4331.6,
+     244.6
+    ]
+   },
+   "capacity": {
+    "residential": 468,
+    "commercial": 365,
+    "industrial": 324
+   },
+   "population": 468
+  },
+  {
+   "id": 32436,
+   "name": "Udtja",
+   "buildings": 200,
+   "cluster_radius_m": 180,
+   "centers": {
+    "residential": [
+     2937.4,
+     2062.3
+    ],
+    "commercial": [
+     3058.1,
+     2148.7
+    ],
+    "industrial": [
+     2913.1,
+     2243.2
+    ]
+   },
+   "capacity": {
+    "residential": 374,
+    "commercial": 252,
+    "industrial": 236
+   },
+   "population": 374
+  },
+  {
+   "id": 32429,
+   "name": "Sikfors",
+   "buildings": 181,
+   "cluster_radius_m": 180,
+   "centers": {
+    "residential": [
+     402.1,
+     -3558.6
+    ],
+    "commercial": [
+     570.0,
+     -3360.1
+    ],
+    "industrial": [
+     351.4,
+     -3311.8
+    ]
+   },
+   "capacity": {
+    "residential": 443,
+    "commercial": 369,
+    "industrial": 314
+   },
+   "population": 443
+  },
+  {
+   "id": 32434,
+   "name": "Finsp\u00e5ng",
+   "buildings": 162,
+   "cluster_radius_m": 180,
+   "centers": {
+    "residential": [
+     -1938.3,
+     -3561.5
+    ],
+    "commercial": [
+     -2017.9,
+     -3381.0
+    ],
+    "industrial": [
+     -2130.5,
+     -3403.9
+    ]
+   },
+   "capacity": {
+    "residential": 318,
+    "commercial": 305,
+    "industrial": 147
+   },
+   "population": 318
+  },
+  {
+   "id": 32431,
+   "name": "S\u00f6derhamn",
+   "buildings": 143,
+   "cluster_radius_m": 180,
+   "centers": {
+    "residential": [
+     3076.5,
+     -4318.2
+    ],
+    "commercial": [
+     3169.5,
+     -4108.1
+    ],
+    "industrial": [
+     2966.9,
+     -4096.7
+    ]
+   },
+   "capacity": {
+    "residential": 344,
+    "commercial": 258,
+    "industrial": 254
+   },
+   "population": 344
+  },
+  {
+   "id": 32430,
+   "name": "\u00c5nge",
+   "buildings": 112,
+   "cluster_radius_m": 180,
+   "centers": {
+    "residential": [
+     -4802.2,
+     4653.3
+    ],
+    "commercial": [
+     -4713.6,
+     4811.7
+    ],
+    "industrial": [
+     -4902.3,
+     4867.1
+    ]
+   },
+   "capacity": {
+    "residential": 246,
+    "commercial": 152,
+    "industrial": 180
+   },
+   "population": 246
+  },
+  {
+   "id": 32435,
+   "name": "Furudal",
+   "buildings": 88,
+   "cluster_radius_m": 180,
+   "centers": {
+    "residential": [
+     -1552.2,
+     4540.5
+    ],
+    "commercial": [
+     -1506.6,
+     4724.1
+    ],
+    "industrial": [
+     -1622.4,
+     4802.3
+    ]
+   },
+   "capacity": {
+    "residential": 162,
+    "commercial": 135,
+    "industrial": 96
+   },
+   "population": 162
+  }
+ ],
+ "industries": [
+  {
+   "type": "farm",
+   "x": 5224.0,
+   "y": -4408.0,
+   "z": 28.5
+  },
+  {
+   "type": "farm",
+   "x": -5220.0,
+   "y": 2428.0,
+   "z": 1.65
+  },
+  {
+   "type": "farm",
+   "x": 4996.0,
+   "y": 5208.0,
+   "z": 0.5
+  },
+  {
+   "type": "fishing_grounds",
+   "x": 5212.0,
+   "y": -1248.0,
+   "z": 0.0
+  },
+  {
+   "type": "oil_refinery",
+   "x": -4956.0,
+   "y": -5232.0,
+   "z": 2.45
+  },
+  {
+   "type": "oil_platform",
+   "x": -4916.0,
+   "y": -3504.0,
+   "z": 0.0
+  },
+  {
+   "type": "bricks_works",
+   "x": 1128.0,
+   "y": -584.0,
+   "z": 2.1
+  },
+  {
+   "type": "clay_pit",
+   "x": -2276.0,
+   "y": -5180.0,
+   "z": 2.2
+  },
+  {
+   "type": "livestock_farm",
+   "x": 5200.0,
+   "y": 980.0,
+   "z": 1.65
+  },
+  {
+   "type": "saw_mill",
+   "x": -3720.0,
+   "y": 1080.0,
+   "z": 1.8
+  },
+  {
+   "type": "farm",
+   "x": -1948.0,
+   "y": 2532.0,
+   "z": 0.55
+  },
+  {
+   "type": "fishing_grounds",
+   "x": 2864.0,
+   "y": 1380.0,
+   "z": 0.0
+  },
+  {
+   "type": "clay_pit",
+   "x": 2500.0,
+   "y": -452.0,
+   "z": 57.55
+  },
+  {
+   "type": "clay_pit",
+   "x": -368.0,
+   "y": 144.0,
+   "z": 0.8
+  },
+  {
+   "type": "fishing_grounds",
+   "x": 3724.0,
+   "y": 1616.0,
+   "z": 0.0
+  },
+  {
+   "type": "fishing_grounds",
+   "x": 3260.0,
+   "y": 884.0,
+   "z": 0.0
+  },
+  {
+   "type": "textile_factory",
+   "x": 3876.0,
+   "y": -5016.0,
+   "z": 1.5
+  },
+  {
+   "type": "sand_excavator",
+   "x": 3816.0,
+   "y": -1912.0,
+   "z": 0.0
+  },
+  {
+   "type": "oil_platform",
+   "x": -3656.0,
+   "y": -4768.0,
+   "z": 0.0
+  },
+  {
+   "type": "livestock_farm",
+   "x": -824.0,
+   "y": 5224.0,
+   "z": 1.3
+  },
+  {
+   "type": "farm",
+   "x": -3992.0,
+   "y": -1284.0,
+   "z": 1.25
+  },
+  {
+   "type": "clay_pit",
+   "x": 1832.0,
+   "y": 228.0,
+   "z": 95.75
+  },
+  {
+   "type": "farm",
+   "x": 1124.0,
+   "y": -3028.0,
+   "z": 1.6
+  },
+  {
+   "type": "oil_platform",
+   "x": -5084.0,
+   "y": -4184.0,
+   "z": 0.0
+  },
+  {
+   "type": "forest",
+   "x": 484.0,
+   "y": -5068.0,
+   "z": 65.55
+  },
+  {
+   "type": "clay_pit",
+   "x": -384.0,
+   "y": -1560.0,
+   "z": 90.3
+  },
+  {
+   "type": "fishing_grounds",
+   "x": 3840.0,
+   "y": 568.0,
+   "z": 0.0
+  },
+  {
+   "type": "livestock_farm",
+   "x": 3288.0,
+   "y": -2788.0,
+   "z": 35.9
+  },
+  {
+   "type": "oil_platform",
+   "x": -4280.0,
+   "y": -3928.0,
+   "z": 0.0
+  },
+  {
+   "type": "forest",
+   "x": 3484.0,
+   "y": -804.0,
+   "z": 91.25
+  },
+  {
+   "type": "farm",
+   "x": 4128.0,
+   "y": 2744.0,
+   "z": 35.15
+  },
+  {
+   "type": "bricks_works",
+   "x": -3280.0,
+   "y": -3536.0,
+   "z": 26.15
+  },
+  {
+   "type": "food_factory",
+   "x": 856.0,
+   "y": 5056.0,
+   "z": 28.45
+  },
+  {
+   "type": "steel_mill",
+   "x": -92.0,
+   "y": 3652.0,
+   "z": 1.0
+  },
+  {
+   "type": "coal_mine",
+   "x": 2340.0,
+   "y": -1764.0,
+   "z": 96.95
+  },
+  {
+   "type": "iron_ore_mine",
+   "x": -3220.0,
+   "y": -40.0,
+   "z": 146.1
+  },
+  {
+   "type": "chemical_plant",
+   "x": 2840.0,
+   "y": -5016.0,
+   "z": 1.5
+  },
+  {
+   "type": "weaving_mill",
+   "x": 2188.0,
+   "y": -4272.0,
+   "z": 0.9
+  },
+  {
+   "type": "cotton_farm",
+   "x": -4220.0,
+   "y": 5196.0,
+   "z": 2.55
+  },
+  {
+   "type": "oil_refinery",
+   "x": 2252.0,
+   "y": -5104.0,
+   "z": 1.2
+  },
+  {
+   "type": "fishing_grounds",
+   "x": 4196.0,
+   "y": -2764.0,
+   "z": 0.0
+  },
+  {
+   "type": "farm",
+   "x": -1920.0,
+   "y": -1064.0,
+   "z": 0.75
+  },
+  {
+   "type": "oil_platform",
+   "x": -3612.0,
+   "y": -4060.0,
+   "z": 0.0
+  },
+  {
+   "type": "brewery",
+   "x": 4880.0,
+   "y": -3480.0,
+   "z": 67.25
+  },
+  {
+   "type": "glass_works",
+   "x": 1948.0,
+   "y": -3476.0,
+   "z": 1.5
+  },
+  {
+   "type": "sand_excavator",
+   "x": 4464.0,
+   "y": -1720.0,
+   "z": 0.0
+  },
+  {
+   "type": "fishing_grounds",
+   "x": -4064.0,
+   "y": -4408.0,
+   "z": 0.0
+  },
+  {
+   "type": "livestock_farm",
+   "x": 196.0,
+   "y": 4420.0,
+   "z": 35.6
+  },
+  {
+   "type": "furniture_factory",
+   "x": -1500.0,
+   "y": 5224.0,
+   "z": 1.8
+  },
+  {
+   "type": "tool_factory",
+   "x": 4912.0,
+   "y": 3940.0,
+   "z": 68.25
+  },
+  {
+   "type": "clay_pit",
+   "x": 564.0,
+   "y": 548.0,
+   "z": 79.55
+  }
+ ]
+}

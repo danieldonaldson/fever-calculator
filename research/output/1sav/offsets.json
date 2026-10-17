@@ -1,0 +1,24 @@
+{
+ "decompressed_size": 222252152,
+ "industry_first": 94902470,
+ "building_first": 94924379,
+ "names_count": 78000055,
+ "names_entries": 7104,
+ "town_entity_first": 215910232,
+ "town_building_first": 211931517,
+ "heightmap_list": 195540429,
+ "heightmap_data": 195563701,
+ "heightmap_end": 211930645,
+ "town_ids": [
+  32428,
+  32429,
+  32430,
+  32431,
+  32432,
+  32433,
+  32434,
+  32435,
+  32436,
+  32437
+ ]
+}

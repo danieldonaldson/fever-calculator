@@ -1,0 +1,11 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "fever-calculator",
+  "compatibility_date": "2026-10-01",
+  // Static assets only: saves are parsed in the browser, so there is no Worker script.
+  "assets": {
+    "directory": "./dist",
+    // Single page with no client-side routes, so unknown paths get a real 404.
+    "not_found_handling": "404-page"
+  }
+}

@@ -1,0 +1,6 @@
+node_modules/
+dist/
+*.sav
+*.raw
+.wrangler/
+.svelte-check/

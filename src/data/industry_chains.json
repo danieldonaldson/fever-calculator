@@ -1,0 +1,276 @@
+{
+ "brewery": {
+  "inputs": [
+   "glass",
+   "grain"
+  ],
+  "outputs": [
+   "beverages"
+  ]
+ },
+ "bricks_works": {
+  "inputs": [
+   "clay"
+  ],
+  "outputs": [
+   "bricks"
+  ]
+ },
+ "cement_plant": {
+  "inputs": [
+   "stone"
+  ],
+  "outputs": [
+   "cement"
+  ]
+ },
+ "chemical_plant": {
+  "inputs": [
+   "chemicals"
+  ],
+  "outputs": [
+   "dyes",
+   "plastic"
+  ]
+ },
+ "clay_pit": {
+  "inputs": [
+   "tools"
+  ],
+  "outputs": [
+   "clay"
+  ]
+ },
+ "coal_mine": {
+  "inputs": [
+   "tools"
+  ],
+  "outputs": [
+   "coal"
+  ]
+ },
+ "cotton_farm": {
+  "inputs": [
+   "fertilizer"
+  ],
+  "outputs": [
+   "wool"
+  ]
+ },
+ "farm": {
+  "inputs": [
+   "fertilizer"
+  ],
+  "outputs": [
+   "grain",
+   "vegetables"
+  ]
+ },
+ "fishing_grounds": {
+  "inputs": [
+   "tools"
+  ],
+  "outputs": [
+   "fish"
+  ]
+ },
+ "food_factory": {
+  "inputs": [
+   "fish",
+   "meat",
+   "sheet_metal"
+  ],
+  "outputs": [
+   "tinned_food"
+  ]
+ },
+ "forest": {
+  "inputs": [
+   "machines"
+  ],
+  "outputs": [
+   "logs"
+  ]
+ },
+ "furniture_factory": {
+  "inputs": [
+   "glass",
+   "planks"
+  ],
+  "outputs": [
+   "furniture"
+  ]
+ },
+ "glass_works": {
+  "inputs": [
+   "sand"
+  ],
+  "outputs": [
+   "glass"
+  ]
+ },
+ "iron_ore_mine": {
+  "inputs": [
+   "machines"
+  ],
+  "outputs": [
+   "iron_ore"
+  ]
+ },
+ "livestock_farm": {
+  "inputs": [
+   "grain"
+  ],
+  "outputs": [
+   "meat",
+   "wool"
+  ]
+ },
+ "machine_factory": {
+  "inputs": [
+   "plastic",
+   "steel"
+  ],
+  "outputs": [
+   "machines"
+  ]
+ },
+ "oil_platform": {
+  "inputs": [
+   "machines"
+  ],
+  "outputs": [
+   "crude_oil"
+  ]
+ },
+ "oil_refinery": {
+  "inputs": [
+   "crude_oil"
+  ],
+  "outputs": [
+   "chemicals",
+   "fertilizer",
+   "fuel"
+  ]
+ },
+ "oil_well": {
+  "inputs": [
+   "machines"
+  ],
+  "outputs": [
+   "crude_oil"
+  ]
+ },
+ "paper_mill": {
+  "inputs": [
+   "sawdust"
+  ],
+  "outputs": [
+   "paper"
+  ]
+ },
+ "printing_press": {
+  "inputs": [
+   "dyes",
+   "paper"
+  ],
+  "outputs": [
+   "books"
+  ]
+ },
+ "quarry": {
+  "inputs": [
+   "tools"
+  ],
+  "outputs": [
+   "stone"
+  ]
+ },
+ "rubber_farm": {
+  "inputs": [
+   "fertilizer"
+  ],
+  "outputs": [
+   "rubber"
+  ]
+ },
+ "sand_excavator": {
+  "inputs": [
+   "machines"
+  ],
+  "outputs": [
+   "sand"
+  ]
+ },
+ "sand_pit": {
+  "inputs": [
+   "tools"
+  ],
+  "outputs": [
+   "sand"
+  ]
+ },
+ "saw_mill": {
+  "inputs": [
+   "logs"
+  ],
+  "outputs": [
+   "planks",
+   "sawdust"
+  ]
+ },
+ "steel_mill": {
+  "inputs": [
+   "coal",
+   "iron_ore"
+  ],
+  "outputs": [
+   "sheet_metal",
+   "steel"
+  ]
+ },
+ "textile_factory": {
+  "inputs": [
+   "dyes",
+   "fabric"
+  ],
+  "outputs": [
+   "clothes"
+  ]
+ },
+ "tire_factory": {
+  "inputs": [
+   "rubber"
+  ],
+  "outputs": [
+   "tires"
+  ]
+ },
+ "tool_factory": {
+  "inputs": [
+   "planks",
+   "plastic"
+  ],
+  "outputs": [
+   "tools"
+  ]
+ },
+ "vehicle_factory": {
+  "inputs": [
+   "machines",
+   "sheet_metal",
+   "tires"
+  ],
+  "outputs": [
+   "vehicles"
+  ]
+ },
+ "weaving_mill": {
+  "inputs": [
+   "wool"
+  ],
+  "outputs": [
+   "fabric"
+  ]
+ }
+}
