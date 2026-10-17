@@ -8,15 +8,15 @@ export interface Chain { inputs: string[]; outputs: string[] }
 const CHAINS = chains as Record<string, Chain>;
 const NAMES = names as Record<string, string>;
 
-// One emoji per base-game industry type, picked for what it produces.
+// One emoji per base-game industry type: the icon of its main output cargo (see CARGO_ICONS).
 const ICONS: Record<string, string> = {
-  brewery: '🍺', bricks_works: '🧱', cement_plant: '🪣', chemical_plant: '🧪', clay_pit: '🏺',
-  coal_mine: '⛏️', cotton_farm: '🌱', farm: '🌾', fishing_grounds: '🐟', food_factory: '🥫',
-  forest: '🌲', furniture_factory: '🪑', glass_works: '🪟', iron_ore_mine: '🧲', livestock_farm: '🐄',
-  machine_factory: '⚙️', oil_platform: '🛢️', oil_refinery: '⛽', oil_well: '🛢️', paper_mill: '📄',
-  printing_press: '📰', quarry: '🪨', rubber_farm: '🌴', sand_excavator: '🚢', sand_pit: '⏳',
-  saw_mill: '🪚', steel_mill: '🔩', textile_factory: '👕', tire_factory: '🛞', tool_factory: '🔧',
-  vehicle_factory: '🚗', weaving_mill: '🧶',
+  brewery: '🍾', bricks_works: '🧱', cement_plant: '🪣', chemical_plant: '🎨', clay_pit: '🏺',
+  coal_mine: '⚫', cotton_farm: '🧶', farm: '🌾', fishing_grounds: '🐠', food_factory: '🥫',
+  forest: '🪵', furniture_factory: '🛋️', glass_works: '🪟', iron_ore_mine: '🟠', livestock_farm: '🥩',
+  machine_factory: '⚙️', oil_platform: '💧', oil_refinery: '🔥', oil_well: '💧', paper_mill: '📄',
+  printing_press: '📚', quarry: '🪨', rubber_farm: '🌴', sand_excavator: '🏜️', sand_pit: '🏜️',
+  saw_mill: '🟫', steel_mill: '🏗️', textile_factory: '👕', tire_factory: '🛞', tool_factory: '🔧',
+  vehicle_factory: '🚗', weaving_mill: '🧵',
 };
 
 export const industryName = (type: string) => NAMES[type] ?? type.replaceAll('_', ' ');
@@ -27,12 +27,12 @@ export const chainOf = (type: string): Chain => CHAINS[type] ?? { inputs: [], ou
 export const cargoName = (c: string) => c.replaceAll('_', ' ');
 
 const CARGO_ICONS: Record<string, string> = {
-  beverages: '🍺', books: '📚', bricks: '🧱', cement: '🪣', chemicals: '🧪', clay: '🏺', clothes: '👕',
-  coal: '⚫', crude_oil: '🛢️', dyes: '🎨', fabric: '🧵', fertilizer: '💩', fish: '🐟', fuel: '⛽',
-  furniture: '🪑', glass: '🪟', grain: '🌾', iron_ore: '🧲', logs: '🌲', machines: '⚙️', meat: '🥩',
-  paper: '📄', planks: '🪵', plastic: '🧴', rubber: '🌴', sand: '⏳', sawdust: '🟫', sheet_metal: '🔩',
-  steel: '🏗️', stone: '🪨', tinned_food: '🥫', tires: '🛞', tools: '🔧', vegetables: '🥕', vehicles: '🚗',
-  wool: '🐑',
+  beverages: '🍾', books: '📚', bricks: '🧱', cement: '🪣', chemicals: '🧪', clay: '🏺', clothes: '👕',
+  coal: '⚫', crude_oil: '💧', dyes: '🎨', fabric: '🧵', fertilizer: '🌱', fish: '🐠', fuel: '🔥',
+  furniture: '🛋️', glass: '🪟', grain: '🌾', iron_ore: '🟠', logs: '🪵', machines: '⚙️', meat: '🥩',
+  paper: '📄', planks: '🟫', plastic: '🟪', rubber: '🌴', sand: '🏜️', sawdust: '🪚', sheet_metal: '🔩',
+  steel: '🏗️', stone: '🪨', tinned_food: '🥫', tires: '🛞', tools: '🔧', vegetables: '🥬', vehicles: '🚗',
+  wool: '🧶',
 };
 export const cargoIcon = (c: string) => CARGO_ICONS[c] ?? '📦';
 
