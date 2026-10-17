@@ -2,7 +2,7 @@
   import MapView from './lib/MapView.svelte';
   import Sidebar from './lib/Sidebar.svelte';
   import Landing from './lib/Landing.svelte';
-  import { loadSave, type Loaded } from './lib/load';
+  import { loadContours, loadSave, type ContourLevel, type Loaded } from './lib/load';
   import { terrainPng } from './worker/render';
   import { sameHighlight, type Highlight, type LabelMode } from './lib/industries';
   import { PALETTE, exportPlan, gameKey, importPlan, loadPlan, newId, savePlan, type Route } from './lib/plans';
@@ -11,11 +11,17 @@
     | { status: 'idle' }
     | { status: 'loading'; step: string; started: number }
     | { status: 'error'; message: string }
-    | { status: 'ready'; data: Loaded; terrain: { flat?: string; shaded: string }; game: string };
+    | {
+        status: 'ready'; data: Loaded; terrain: { flat?: string; shaded: string }; game: string;
+        /** by spacing in metres, traced the first time that spacing is shown; the fraction done while tracing */
+        contours: Record<number, ContourLevel[] | number>;
+      };
 
   let s: State = $state({ status: 'idle' });
   let routes: Route[] = $state([]);
   let shaded = $state(true);
+  let showContours = $state(false);
+  let contourM = $state(10);
   let showRails = $state(false);
   let industryLabels: LabelMode = $state('zoom');
   let preview: Highlight | null = $state(null);
@@ -41,7 +47,7 @@
       pinned = preview = null;
       s = {
         status: 'ready', data, game,
-        terrain: { shaded: URL.createObjectURL(data.terrain.shaded) },
+        terrain: { shaded: URL.createObjectURL(data.terrain.shaded) }, contours: {},
       };
     } catch (e) {
       console.error(e);
@@ -56,6 +62,17 @@
     terrainPng(ready.data.raster, false).then((blob) => {
       if (s === ready) ready.terrain.flat = URL.createObjectURL(blob);
     });
+  });
+
+  // contours are only traced once they're shown, once per spacing
+  $effect(() => {
+    if (s.status !== 'ready' || !showContours || s.contours[contourM] !== undefined) return;
+    const ready = s, m = contourM;
+    ready.contours[m] = 0;
+    loadContours($state.snapshot(ready.data.raster), m, (f) => { ready.contours[m] = f; }).then(
+      (c) => { ready.contours[m] = c; },
+      (e) => { console.error(e); delete ready.contours[m]; if (s === ready) showContours = false; },
+    );
   });
 
   // persist the plan whenever routes change
@@ -115,10 +132,12 @@
 
 {#if s.status === 'ready'}
   {@const ready = s}
+  {@const traced = ready.contours[contourM]}
+  {@const tracing = showContours && typeof traced === 'number' ? traced : null}
   <div class="layout">
     <Sidebar
       world={ready.data.world} warnings={ready.data.warnings}
-      bind:routes bind:shaded bind:showRails bind:industryLabels bind:preview {pinned} onPin={pin}
+      bind:routes bind:shaded bind:showContours bind:contourM contoursTracing={tracing !== null} bind:showRails bind:industryLabels bind:preview {pinned} onPin={pin}
       onOpen={() => fileInput.click()}
       onFly={(x, y) => mapView?.flyTo(x, y)}
       onDraw={() => mapView?.drawRoute()}
@@ -129,9 +148,15 @@
     <main>
       {#key ready.data}
         <MapView bind:this={mapView}
-          world={ready.data.world} terrain={shaded ? ready.terrain.shaded : ready.terrain.flat ?? ready.terrain.shaded} {showRails} {industryLabels} {routes} {preview} {pinned} onPin={pin}
+          world={ready.data.world} terrain={shaded ? ready.terrain.shaded : ready.terrain.flat ?? ready.terrain.shaded} {showRails} {industryLabels} {routes}
+          contours={showContours && Array.isArray(traced) ? traced : null} contourIndexM={5 * contourM} {preview} {pinned} onPin={pin}
           onCreate={create} onEdit={edit} onRemove={remove} />
       {/key}
+      {#if tracing !== null}
+        <div class="map-status" role="status">
+          <span class="spinner"></span>Tracing {contourM} m contours… {Math.round(tracing * 100)}%
+        </div>
+      {/if}
     </main>
   </div>
 {:else}
@@ -162,6 +187,37 @@
     }
     main {
       grid-row: 1;
+    }
+  }
+  .map-status {
+    position: absolute;
+    top: 12px;
+    left: 50%;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: var(--panel);
+    color: var(--text);
+    box-shadow: 0 1px 4px rgb(0 0 0 / 0.25);
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+    transform: translateX(-50%);
+    pointer-events: none;
+  }
+  .spinner {
+    width: 12px;
+    height: 12px;
+    border: 2px solid var(--muted);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
     }
   }
   .drop {

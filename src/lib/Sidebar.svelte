@@ -12,6 +12,11 @@
     warnings: string[];
     routes: Route[];
     shaded: boolean;
+    showContours: boolean;
+    /** contour spacing in metres */
+    contourM: number;
+    /** contours are being traced */
+    contoursTracing: boolean;
     showRails: boolean;
     industryLabels: LabelMode;
     preview: Highlight | null;
@@ -25,7 +30,7 @@
     onImport: (f: File) => void;
   }
   let {
-    world, warnings, routes = $bindable(), shaded = $bindable(), showRails = $bindable(), industryLabels = $bindable(),
+    world, warnings, routes = $bindable(), shaded = $bindable(), showContours = $bindable(), contourM = $bindable(), contoursTracing, showRails = $bindable(), industryLabels = $bindable(),
     preview = $bindable(), pinned, onPin, onOpen, onFly, onDraw, onDelete, onExport, onImport,
   }: Props = $props();
 
@@ -68,6 +73,13 @@
   <section>
     <h2>Map</h2>
     <label><input type="checkbox" bind:checked={shaded} /> Hillshade</label>
+    <div class="select">
+      <label><input type="checkbox" bind:checked={showContours} /> Contours
+        {#if contoursTracing}<span class="muted">tracing…</span>{/if}</label>
+      <select bind:value={contourM} disabled={!showContours} aria-label="Contour spacing" title="Spacing; every 5th line is heavier">
+        {#each [5, 10, 20, 50] as m}<option value={m}>every {m} m</option>{/each}
+      </select>
+    </div>
     <label><input type="checkbox" bind:checked={showRails} /> Railways <span class="beta">beta</span>
       <span class="muted">{railKm(world.rails)}</span></label>
     <label class="select">Industry labels
@@ -215,7 +227,7 @@
     font-size: 14px;
     padding: 2px 0;
   }
-  label.select {
+  .select {
     display: flex;
     justify-content: space-between;
     align-items: center;

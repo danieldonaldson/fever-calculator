@@ -12,11 +12,16 @@
   } from './industries';
   import { routeLength, type Route } from './plans';
   import { km } from './format';
+  import type { ContourLevel } from './load';
 
   interface Props {
     world: World;
     /** URL of the terrain image to show */
     terrain: string;
+    /** traced contours, or null to hide them */
+    contours: ContourLevel[] | null;
+    /** levels that are a multiple of this are drawn heavier */
+    contourIndexM: number;
     showRails: boolean;
     industryLabels: LabelMode;
     routes: Route[];
@@ -30,16 +35,22 @@
     onEdit: (id: string, points: [number, number][]) => void;
     onRemove: (id: string) => void;
   }
-  let { world, terrain, showRails, industryLabels, routes, preview, pinned, onPin, onCreate, onEdit, onRemove }: Props = $props();
+  let { world, terrain, contours, contourIndexM, showRails, industryLabels, routes, preview, pinned, onPin, onCreate, onEdit, onRemove }: Props = $props();
 
   const KIND_COLOR: Record<Kind, string> = { residential: '#28aa3c', commercial: '#285adc', industrial: '#f08c14' };
   const IND = { fill: '#9632c8', supplier: '#e03131', consumer: '#15aabf' };
   const LABEL_MIN_ZOOM = -2;
+  /** zoomed further out, only index contours show: minor ones run together in the hills */
+  const MINOR_CONTOUR_MIN_ZOOM = -2;
 
   let el: HTMLDivElement;
   let map: L.Map;
   let overlay: L.ImageOverlay;
   let rails: L.LayerGroup;
+  let contourLayer: L.LayerGroup | null = null;
+  /** the levels `contourLayer` was built from */
+  let contourSrc: ContourLevel[] | null = null;
+  let minorContours: L.Polyline | null = null;
   let hover: Highlight | null = $state(null);
   let drawing = $state(false);
   const industryLayers: { type: string; layer: L.Marker }[] = [];
@@ -69,8 +80,9 @@
       maxBounds: bounds.pad(0.25), attributionControl: false,
     });
     map.fitBounds(bounds);
-    // panes: terrain < rails < town circles (overlayPane, 400) < markers
+    // panes: terrain < contours < rails < town circles (overlayPane, 400) < markers
     map.createPane('terrain').style.zIndex = '200';
+    map.createPane('contours').style.zIndex = '250';
     map.createPane('rails').style.zIndex = '300';
     overlay = L.imageOverlay(terrain, bounds, { pane: 'terrain', pmIgnore: true, snapIgnore: true } as object).addTo(map);
     rails = railLayer(world.rails);
@@ -145,6 +157,7 @@
     map.on('pm:drawstart', () => { drawing = true; hover = null; });
     map.on('pm:drawend', () => (drawing = false));
     map.on('zoomend', labelsByZoom);
+    map.on('zoomend', contoursByZoom);
     labelsByZoom();
     return () => map.remove();
   });
@@ -182,6 +195,30 @@
     return group;
   }
 
+  /** Contours as two multi-polylines on a canvas renderer: thin minor lines, heavier index lines. */
+  function contourLayerOf(levels: ContourLevel[]): L.LayerGroup {
+    const renderer = L.canvas({ pane: 'contours', padding: 0.5 });
+    const base = { renderer, interactive: false, pmIgnore: true, snapIgnore: true, color: '#7a5230', smoothFactor: 1.5 } as L.PolylineOptions;
+    const lines = (index: boolean) => levels
+      .filter((l) => (l.level_m % contourIndexM === 0) === index)
+      .flatMap((l) => l.lines.map((a) => {
+        const out: L.LatLng[] = [];
+        for (let k = 0; k < a.length; k += 2) out.push(ll(a[k], a[k + 1]));
+        return out;
+      }));
+    const group = L.layerGroup();
+    minorContours = L.polyline(lines(false), { ...base, weight: 0.8, opacity: 0.45 });
+    L.polyline(lines(true), { ...base, weight: 1.5, opacity: 0.7 }).addTo(group);
+    return group;
+  }
+
+  function contoursByZoom() {
+    if (!minorContours) return;
+    const show = !!contours && map.getZoom() >= MINOR_CONTOUR_MIN_ZOOM;
+    if (show) minorContours.addTo(map);
+    else minorContours.remove();
+  }
+
   function attach(id: string, layer: L.Polyline) {
     routeLayers.set(id, layer);
     layer.on('pm:edit', () => onEdit(id, pts(layer)));
@@ -196,6 +233,17 @@
   // terrain style
   $effect(() => {
     overlay?.setUrl(terrain);
+  });
+  $effect(() => {
+    if (!map) return;
+    if (contours !== contourSrc) {
+      contourLayer?.remove();
+      minorContours?.remove();
+      contourLayer = minorContours = null;
+      if (contours) contourLayer = contourLayerOf(contours).addTo(map);
+      contourSrc = contours;
+    }
+    contoursByZoom();
   });
   $effect(() => {
     if (!rails) return;
