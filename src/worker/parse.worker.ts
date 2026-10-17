@@ -2,14 +2,16 @@
 // The page creates one worker per save and terminates it afterwards to release the ~400 MB buffer.
 import * as Comlink from 'comlink';
 import { decompressSave } from '../parser/decompress';
-import { parseSave, type Offsets, type World } from '../parser';
+import { parseSave, type Offsets, type Raster, type World } from '../parser';
 import { terrainPng } from './render';
 
 export interface Loaded {
   world: World;
   offsets: Offsets;
   warnings: string[];
-  terrain: { flat: Blob; shaded: Blob };
+  /** hillshaded terrain PNG; the flat one is drawn from `raster` on the page when first shown */
+  terrain: { shaded: Blob };
+  raster: Raster;
   timings: [string, number][];
 }
 
@@ -26,13 +28,14 @@ const api = {
     progress(step);
     const input = new Uint8Array(await file.arrayBuffer());
     mark('Decompressing');
-    const data = decompressSave(input);
+    const data = await decompressSave(input);
     mark('Parsing');
     const r = parseSave(data, file.name, (s) => mark(s));
     mark('Drawing terrain');
-    const [flat, shaded] = await Promise.all([terrainPng(r.raster, false), terrainPng(r.raster, true)]);
+    const shaded = await terrainPng(r.raster, true);
     mark('Done');
-    return { world: r.world, offsets: r.offsets, warnings: r.warnings, terrain: { flat, shaded }, timings };
+    const out: Loaded = { world: r.world, offsets: r.offsets, warnings: r.warnings, terrain: { shaded }, raster: r.raster, timings };
+    return Comlink.transfer(out, [r.raster.heights.buffer]);
   },
 };
 

@@ -14,9 +14,9 @@
   "dependencies": {
     "@geoman-io/leaflet-geoman-free": "^2.20.2",
     "comlink": "^4.4.2",
-    "fzstd": "^0.1.1",
     "idb-keyval": "^6.3.0",
-    "leaflet": "^1.9.4"
+    "leaflet": "^1.9.4",
+    "zstd-wasm-decoder": "^0.2.3"
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^7.3.1",

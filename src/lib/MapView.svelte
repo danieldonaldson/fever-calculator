@@ -15,8 +15,8 @@
 
   interface Props {
     world: World;
-    terrain: { flat: string; shaded: string };
-    shaded: boolean;
+    /** URL of the terrain image to show */
+    terrain: string;
     showRails: boolean;
     industryLabels: LabelMode;
     routes: Route[];
@@ -30,7 +30,7 @@
     onEdit: (id: string, points: [number, number][]) => void;
     onRemove: (id: string) => void;
   }
-  let { world, terrain, shaded, showRails, industryLabels, routes, preview, pinned, onPin, onCreate, onEdit, onRemove }: Props = $props();
+  let { world, terrain, showRails, industryLabels, routes, preview, pinned, onPin, onCreate, onEdit, onRemove }: Props = $props();
 
   const KIND_COLOR: Record<Kind, string> = { residential: '#28aa3c', commercial: '#285adc', industrial: '#f08c14' };
   const IND = { fill: '#9632c8', supplier: '#e03131', consumer: '#15aabf' };
@@ -72,7 +72,7 @@
     // panes: terrain < rails < town circles (overlayPane, 400) < markers
     map.createPane('terrain').style.zIndex = '200';
     map.createPane('rails').style.zIndex = '300';
-    overlay = L.imageOverlay(shaded ? terrain.shaded : terrain.flat, bounds, { pane: 'terrain', pmIgnore: true, snapIgnore: true } as object).addTo(map);
+    overlay = L.imageOverlay(terrain, bounds, { pane: 'terrain', pmIgnore: true, snapIgnore: true } as object).addTo(map);
     rails = railLayer(world.rails);
     L.control.scale({ imperial: false, position: 'bottomleft' }).addTo(map);
     // town names above industry labels (both are tooltips; tooltipPane is z-index 650)
@@ -195,7 +195,7 @@
 
   // terrain style
   $effect(() => {
-    overlay?.setUrl(shaded ? terrain.shaded : terrain.flat);
+    overlay?.setUrl(terrain);
   });
   $effect(() => {
     if (!rails) return;

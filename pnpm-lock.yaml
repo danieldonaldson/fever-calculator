@@ -14,15 +14,15 @@ importers:
       comlink:
         specifier: ^4.4.2
         version: 4.4.2
-      fzstd:
-        specifier: ^0.1.1
-        version: 0.1.1
       idb-keyval:
         specifier: ^6.3.0
         version: 6.3.0
       leaflet:
         specifier: ^1.9.4
         version: 1.9.4
+      zstd-wasm-decoder:
+        specifier: ^0.2.3
+        version: 0.2.3
     devDependencies:
       '@sveltejs/vite-plugin-svelte':
         specifier: ^7.3.1
@@ -883,9 +883,6 @@ packages:
     engines: {node: ^8.16.0 || ^10.6.0 || >=11.0.0}
     os: [darwin]
 
-  fzstd@0.1.1:
-    resolution: {integrity: sha512-dkuVSOKKwh3eas5VkJy1AW1vFpet8TA/fGmVA5krThl8YcOVE/8ZIoEA1+U1vEn5ckxxhLirSdY837azmbaNHA==}
-
   idb-keyval@6.3.0:
     resolution: {integrity: sha512-um+2dgAWmYsu615EXpWVwSmapJhON0G43t3Ka/EVaohzPQXSMqKEqeDK/oIW3Ow+BXaF2PvSc+oBTFp793A5Ow==}
 
@@ -1264,6 +1261,10 @@ packages:
 
   zimmerframe@1.1.5:
     resolution: {integrity: sha512-msJxIvYDYcoNL+PJsu+7qmpDWsYmAxTY+2TNYXXF0hzBzBk0BMecOqDOG/EckUoKCuKwObfbugIl8QpqHDXeFA==}
+
+  zstd-wasm-decoder@0.2.3:
+    resolution: {integrity: sha512-Sv/4PqvQNQT20cA+dk9K3lwkLxNfYzKEGb99gyfw52HdDQpM0CeKTRDqIenDgCqvOif2XaOLc3CdqE1SM2ucSQ==}
+    engines: {node: '>=22', npm: '>=8'}
 
 snapshots:
 
@@ -1889,8 +1890,6 @@ snapshots:
   fsevents@2.3.3:
     optional: true
 
-  fzstd@0.1.1: {}
-
   idb-keyval@6.3.0: {}
 
   is-reference@3.0.3:
@@ -2245,3 +2244,5 @@ snapshots:
       youch-core: 0.3.3
 
   zimmerframe@1.1.5: {}
+
+  zstd-wasm-decoder@0.2.3: {}

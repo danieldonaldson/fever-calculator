@@ -12,33 +12,45 @@ const LIGHT = (() => {
   return v.map((c) => c / n);
 })();
 
+/**
+ * RGBA pixels, north up. Hot loop over ~8M samples: no per-pixel allocation, water colours come
+ * from a table by raw height, and pixels are written as one u32 each (RGBA little-endian).
+ */
 export function terrainPixels(r: Raster, shaded: boolean): Uint8ClampedArray<ArrayBuffer> {
   const { heights: h, width: W, height: H, sample_m } = r;
   const px = new Uint8ClampedArray(W * H * 4);
-  const flat = LIGHT[2];
+  const out = new Uint32Array(px.buffer);
+  const rgba = (c: number[], f = 1) => {
+    const ch = new Uint8ClampedArray([c[0] * f, c[1] * f, c[2] * f, 255]);
+    return new Uint32Array(ch.buffer)[0];
+  };
+  const land = rgba(LAND);
+  if (!shaded) {
+    const water = rgba(WATER);
+    for (let i = 0; i < W * H; i++) out[i] = h[i] < RAW_ZERO ? water : land;
+    return px;
+  }
+  // water: shallow to deep over the first 15 m
+  const water = new Uint32Array(RAW_ZERO);
+  for (let raw = 0; raw < RAW_ZERO; raw++) {
+    const t = Math.min(1, (RAW_ZERO - raw) / RAW_PER_M / 15);
+    water[raw] = rgba(WATER_SHALLOW.map((s, k) => s + (WATER[k] - s) * t));
+  }
+  const [L0, L1, L2] = LIGHT, flat = L2;
+  const k = EXAGGERATION / (RAW_PER_M * 2 * sample_m);
+  const [R, G, B] = LAND;
   for (let row = 0; row < H; row++) {
+    const rn = Math.max(0, row - 1) * W, rs = Math.min(H - 1, row + 1) * W, rc = row * W;
     for (let col = 0; col < W; col++) {
-      const i = row * W + col, o = i * 4, raw = h[i];
-      let c: number[];
-      if (raw < RAW_ZERO) {
-        if (!shaded) c = WATER;
-        else {
-          const t = Math.min(1, (RAW_ZERO - raw) / RAW_PER_M / 15); // full depth colour at 15 m
-          c = WATER_SHALLOW.map((s, k) => s + (WATER[k] - s) * t);
-        }
-      } else if (!shaded) c = LAND;
-      else {
-        // central differences in metres; row - 1 is north
-        const e = h[row * W + Math.min(W - 1, col + 1)], w = h[row * W + Math.max(0, col - 1)];
-        const n = h[Math.max(0, row - 1) * W + col], s = h[Math.min(H - 1, row + 1) * W + col];
-        const dzdx = ((e - w) / RAW_PER_M) * EXAGGERATION / (2 * sample_m);
-        const dzdy = ((n - s) / RAW_PER_M) * EXAGGERATION / (2 * sample_m);
-        const len = Math.hypot(dzdx, dzdy, 1);
-        const lum = Math.max(0, (-dzdx * LIGHT[0] - dzdy * LIGHT[1] + LIGHT[2]) / len) / flat;
-        const f = 0.55 + 0.45 * Math.min(lum, 1.25);
-        c = LAND.map((v) => v * f);
-      }
-      px[o] = c[0]; px[o + 1] = c[1]; px[o + 2] = c[2]; px[o + 3] = 255;
+      const i = rc + col, raw = h[i];
+      if (raw < RAW_ZERO) { out[i] = water[raw]; continue; }
+      // central differences in metres; row - 1 is north
+      const dzdx = (h[rc + Math.min(W - 1, col + 1)] - h[rc + Math.max(0, col - 1)]) * k;
+      const dzdy = (h[rn + col] - h[rs + col]) * k;
+      const lum = Math.max(0, (-dzdx * L0 - dzdy * L1 + L2) / Math.sqrt(dzdx * dzdx + dzdy * dzdy + 1)) / flat;
+      const f = 0.55 + 0.45 * Math.min(lum, 1.25);
+      const o = i * 4;
+      px[o] = R * f; px[o + 1] = G * f; px[o + 2] = B * f; px[o + 3] = 255;
     }
   }
   return px;

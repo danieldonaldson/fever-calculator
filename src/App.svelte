@@ -3,6 +3,7 @@
   import Sidebar from './lib/Sidebar.svelte';
   import Landing from './lib/Landing.svelte';
   import { loadSave, type Loaded } from './lib/load';
+  import { terrainPng } from './worker/render';
   import { sameHighlight, type Highlight, type LabelMode } from './lib/industries';
   import { PALETTE, exportPlan, gameKey, importPlan, loadPlan, newId, savePlan, type Route } from './lib/plans';
 
@@ -10,7 +11,7 @@
     | { status: 'idle' }
     | { status: 'loading'; step: string; started: number }
     | { status: 'error'; message: string }
-    | { status: 'ready'; data: Loaded; terrain: { flat: string; shaded: string }; game: string };
+    | { status: 'ready'; data: Loaded; terrain: { flat?: string; shaded: string }; game: string };
 
   let s: State = $state({ status: 'idle' });
   let routes: Route[] = $state([]);
@@ -27,7 +28,7 @@
 
   async function open(file: File) {
     if (s.status === 'ready') {
-      URL.revokeObjectURL(s.terrain.flat);
+      if (s.terrain.flat) URL.revokeObjectURL(s.terrain.flat);
       URL.revokeObjectURL(s.terrain.shaded);
     }
     const started = performance.now();
@@ -40,13 +41,22 @@
       pinned = preview = null;
       s = {
         status: 'ready', data, game,
-        terrain: { flat: URL.createObjectURL(data.terrain.flat), shaded: URL.createObjectURL(data.terrain.shaded) },
+        terrain: { shaded: URL.createObjectURL(data.terrain.shaded) },
       };
     } catch (e) {
       console.error(e);
       s = { status: 'error', message: e instanceof Error ? e.message : String(e) };
     }
   }
+
+  // the flat terrain image is only drawn once hillshade is first turned off
+  $effect(() => {
+    if (s.status !== 'ready' || shaded || s.terrain.flat) return;
+    const ready = s;
+    terrainPng(ready.data.raster, false).then((blob) => {
+      if (s === ready) ready.terrain.flat = URL.createObjectURL(blob);
+    });
+  });
 
   // persist the plan whenever routes change
   $effect(() => {
@@ -119,7 +129,7 @@
     <main>
       {#key ready.data}
         <MapView bind:this={mapView}
-          world={ready.data.world} terrain={ready.terrain} {shaded} {showRails} {industryLabels} {routes} {preview} {pinned} onPin={pin}
+          world={ready.data.world} terrain={shaded ? ready.terrain.shaded : ready.terrain.flat ?? ready.terrain.shaded} {showRails} {industryLabels} {routes} {preview} {pinned} onPin={pin}
           onCreate={create} onEdit={edit} onRemove={remove} />
       {/key}
     </main>

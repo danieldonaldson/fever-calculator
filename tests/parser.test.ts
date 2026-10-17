@@ -151,10 +151,10 @@ describe('town pairing', () => {
   });
 });
 
-describe.skipIf(!savePath('1.sav'))('fzstd', () => {
-  it('decompresses like native zstd', () => {
+describe.skipIf(!savePath('1.sav'))('zstd', () => {
+  it('decompresses like native zstd', async () => {
     const c = new Uint8Array(readFileSync(savePath('1.sav')!));
-    const a = decompressSave(c), b = new Uint8Array(zstdDecompressSync(c));
+    const a = await decompressSave(c), b = new Uint8Array(zstdDecompressSync(c));
     expect(a.length).toBe(b.length);
     expect(Buffer.compare(a, b)).toBe(0);
   });
