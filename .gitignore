@@ -4,3 +4,6 @@ dist/
 *.raw
 .wrangler/
 .svelte-check/
+
+# local probe/bench tests
+tests/zz_*
