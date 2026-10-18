@@ -1,7 +1,7 @@
 // Golden tests: the TypeScript port must reproduce the Python reference output
 // (research/output/<save>/{world,offsets}.json) on both researched saves.
 import { readFileSync } from 'node:fs';
-import { zstdDecompressSync } from 'node:zlib';
+import { zstdCompressSync, zstdDecompressSync } from 'node:zlib';
 import { describe, expect, it } from 'vitest';
 import { decompressSave } from '../src/parser/decompress';
 import { pyRound, pySum } from '../src/parser/bytes';
@@ -148,6 +148,15 @@ describe('town pairing', () => {
   it('looks names up by id, so a town missing from the records keeps the right name', () => {
     const { towns: out } = towns(blds, recs.map((r) => ({ ...r, town: r.town === 11 ? 12 : r.town })), [10, 12], ['', 'X', 'Y', 'Z']);
     expect(out.map((t) => t.name)).toEqual(['X', 'Z']);
+  });
+});
+
+describe('zstd output buffer', () => {
+  it('is fixed-length, which browser TextDecoder requires', async () => {
+    const raw = new TextEncoder().encode('fever '.repeat(500_000));
+    const a = await decompressSave(new Uint8Array(zstdCompressSync(raw)));
+    expect((a.buffer as ArrayBuffer).resizable).toBe(false);
+    expect(Buffer.compare(a, raw)).toBe(0);
   });
 });
 

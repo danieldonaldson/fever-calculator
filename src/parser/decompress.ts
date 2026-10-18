@@ -55,5 +55,7 @@ export async function decompressSave(src: Blob | Uint8Array): Promise<Uint8Array
     out.set(chunk, n);
     n += chunk.length;
   }
-  return new Uint8Array(buf, 0, n);
+  // Browsers reject views of a resizable buffer in TextDecoder.decode() and other web APIs
+  // ("The provided ArrayBuffer value must not be resizable"), so hand out a fixed-length one.
+  return new Uint8Array(buf.transferToFixedLength(n));
 }
