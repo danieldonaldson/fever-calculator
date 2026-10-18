@@ -71,7 +71,7 @@ export function constructions(b: Bytes) {
       throw e;
     }
     if (!isTransform(t)) continue;
-    const path = latin1.decode(b.u8.subarray(s, end));
+    const path = b.str(latin1, s, end);
     const seg = path.split('/');
     if (path.startsWith('industries/')) {
       industries.push({ type: seg[1], x: t[12], y: t[13], z: t[14], offset: s - 4 });

@@ -5,17 +5,28 @@ export class Bytes {
   readonly u8: Uint8Array;
   readonly dv: DataView;
   readonly length: number;
+  /** decompressSave returns a view of a resizable buffer, which browsers' TextDecoder rejects */
+  private readonly resizable: boolean;
 
   constructor(u8: Uint8Array) {
     this.u8 = u8;
     this.dv = new DataView(u8.buffer, u8.byteOffset, u8.byteLength);
     this.length = u8.length;
+    this.resizable = (u8.buffer as ArrayBuffer).resizable === true;
   }
 
   u32(o: number): number { return this.dv.getUint32(o, true); }
   i32(o: number): number { return this.dv.getInt32(o, true); }
   f32(o: number): number { return this.dv.getFloat32(o, true); }
   f64(o: number): number { return this.dv.getFloat64(o, true); }
+
+  /**
+   * Decode bytes [a, end). Strings are short, so on a resizable buffer the slice is copied out
+   * rather than copying the whole save to a fixed-length buffer.
+   */
+  str(dec: TextDecoder, a: number, end: number): string {
+    return dec.decode(this.resizable ? this.u8.slice(a, end) : this.u8.subarray(a, end));
+  }
 
   /** Byte-for-byte comparison of `needle` at offset `o`. */
   eq(o: number, needle: Uint8Array): boolean {

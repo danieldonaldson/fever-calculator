@@ -10,7 +10,7 @@ function strAt(b: Bytes, p: number, maxlen = 400): string | null {
   if (n > maxlen) return null;
   let t: string;
   try {
-    t = strict.decode(b.u8.subarray(p + 4, p + 4 + n));
+    t = b.str(strict, p + 4, p + 4 + n);
   } catch {
     return null;
   }

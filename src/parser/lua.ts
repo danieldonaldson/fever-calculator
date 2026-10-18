@@ -19,7 +19,7 @@ export function luaValue(b: Bytes, p: number, depth = 0): [LuaValue, number] {
     case 3: {
       const n = b.u32(p);
       if (n > 1_000_000) throw new Bad('string too long');
-      return [utf8.decode(b.u8.subarray(p + 4, p + 4 + n)), p + 4 + n];
+      return [b.str(utf8, p + 4, p + 4 + n), p + 4 + n];
     }
     case 4:
       return luaTable(b, p + 1, depth + 1); // skip u8 flag

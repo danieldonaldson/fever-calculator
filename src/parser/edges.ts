@@ -40,7 +40,7 @@ function stringEndingAt(b: Bytes, end: number, maxLen = 200): [string, number] |
     const q = end - L - 4;
     if (q < 0) return null;
     if (b.u32(q) !== L) continue;
-    const s = latin1.decode(b.u8.subarray(q + 4, end));
+    const s = b.str(latin1, q + 4, end);
     return PATH_RE.test(s) ? [s, q] : null;
   }
   return null;
