@@ -2,10 +2,19 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "fever-calculator",
   "compatibility_date": "2026-10-01",
+  "workers_dev": true,
+  "routes": [{ "pattern": "fever.toutouwai.com", "custom_domain": true }],
   // Static assets only: saves are parsed in the browser, so there is no Worker script.
   "assets": {
     "directory": "./dist",
     // Single page with no client-side routes, so unknown paths get a real 404.
     "not_found_handling": "404-page"
+  },
+  "observability": {
+    "logs": {
+      "enabled": true,
+      "invocation_logs": true,
+      "persist": true
+    }
   }
 }
