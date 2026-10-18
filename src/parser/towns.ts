@@ -259,9 +259,10 @@ export function towns(blds: Building[], recs: TownBuildingRecord[], ids: number[
   if (ambiguous(costs, town)) {
     warnings.push('two towns match their building clusters equally well; their names may be swapped');
   }
-  // NAME[1..] holds the towns while their ids run on from the first (FINDINGS §4); a small gap is a
-  // town missing from the records. Past a larger gap (the campaign save: 13698, then 15346) the NAME
-  // position isn't linked to the id, so those towns get no name.
+  // NAME[1..] holds the towns in id order while their ids run on from the first (FINDINGS §4). A
+  // small gap is an entity with no NAME entry (big6.sav: 99322 between towns), so names go by rank,
+  // not id offset. Past a larger gap (the campaign save: 13698, then 15346) the NAME position isn't
+  // linked to the id, so those towns get no name.
   let named = 1;
   while (named < ids.length && ids[named] - ids[named - 1] <= ids.length) named++;
   if (named < ids.length) warnings.push(`${ids.length - named} town names can't be read (town ids aren't consecutive)`);
@@ -269,7 +270,7 @@ export function towns(blds: Building[], recs: TownBuildingRecord[], ids: number[
   const out: Town[] = cls.map((c, n) => {
     const id = ids[town[n]];
     const t: Town = {
-      id, name: (id <= ids[named - 1] && names[1 + id - ids[0]]) || `Town ${id}`, buildings: c.length, cluster_radius_m: R,
+      id, name: (town[n] < named && names[1 + town[n]]) || `Town ${id}`, buildings: c.length, cluster_radius_m: R,
       centers: {}, capacity: { residential: 0, commercial: 0, industrial: 0 }, population: 0,
       demand: { commercial: [], industrial: [] },
     };

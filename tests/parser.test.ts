@@ -107,6 +107,23 @@ for (const [save, n] of [['test3.sav', 5], ['test4.sav', 16], ['test5.sav', 21]]
   });
 }
 
+// Big fresh maps. big6's town ids skip 99322, an entity with no NAME entry: naming by id offset
+// shifted ten towns and called the last one "Arneburg Crop Farm".
+for (const [save, n] of [['big6.sav', 34], ['big7.sav', 48], ['big8.sav', 66]] as const) {
+  const path = savePath(save);
+  describe.skipIf(!path)(save, () => {
+    it(`finds all ${n} towns and names each from the town part of NAME`, () => {
+      const r = parseSave(new Uint8Array(zstdDecompressSync(readFileSync(path!))), save);
+      expect(r.warnings).toEqual([]);
+      expect(r.world.towns.length).toBe(n);
+      const names = r.world.towns.map((t) => t.name);
+      expect(new Set(names).size).toBe(n);
+      expect(names.filter((t) => / (Crop Farm|Oil Platform|Clay Pit|Livestock Farm)$/.test(t))).toEqual([]);
+      if (save === 'big6.sav') expect(names).toContain('Obernkirchen');
+    }, 60_000);
+  });
+}
+
 describe.skipIf(!savePath('test5.sav'))('town search', () => {
   it('ignores seeds outside the town records', () => {
     const b = new Bytes(new Uint8Array(zstdDecompressSync(readFileSync(savePath('test5.sav')!))));
@@ -145,9 +162,9 @@ describe('town pairing', () => {
     const { towns: out } = towns(blds, recs, [10, 11], ['', 'X', 'Y']);
     expect(out.map((t) => [t.name, t.buildings])).toEqual([['X', 4], ['Y', 1]]);
   });
-  it('looks names up by id, so a town missing from the records keeps the right name', () => {
+  it('names towns by id rank, so an unnamed entity between town ids shifts nothing', () => {
     const { towns: out } = towns(blds, recs.map((r) => ({ ...r, town: r.town === 11 ? 12 : r.town })), [10, 12], ['', 'X', 'Y', 'Z']);
-    expect(out.map((t) => t.name)).toEqual(['X', 'Z']);
+    expect(out.map((t) => t.name)).toEqual(['X', 'Y']);
   });
 });
 

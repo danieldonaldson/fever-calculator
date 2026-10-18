@@ -130,6 +130,10 @@ i64 timeBuilt            (game ms)
   linking them was found. So it's probably insertion order with swap-on-delete. Fresh games
   keep the towns at [1..T]; the TS parser names towns only up to the first gap larger than the
   town count, and the rest get `Town <id>` plus a warning.
+- **Town ids can skip an unnamed entity** (`big6.sav`, 2026-10-18): towns 99298–99332 minus 99322,
+  34 names at NAME[1..34], then `Arneburg Crop Farm`. 99322 occurs once, in a sorted entity-id
+  list, with no NAME entry; `Obernkirchen` (NAME[25]) is a real town (its oil platforms carry the
+  name). So towns map to NAME by **id rank**, not by `id − first id`.
 - This table is the **only full copy** of town names. Partial copies exist in town
   notification state (§5), but they're snapshots, so ignore them.
 - Renaming a town changes the string here, and the tool picks it up. Linking is by id
